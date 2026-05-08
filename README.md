@@ -28,4 +28,4 @@ Proyek ini dikembangkan secara kolaboratif dengan pembagian fokus sebagai beriku
 
 ## 📁 Link Dokumen
 Berikut adalah tautan dokumen terkait pengembangan proyek ini:
-**Google Docs**: [https://docs.google.com/document/d/1bbeGj649kB4TlVtWBhqFZHt-Nfvc7Ev30XBNnAMqTaU/edit?tab=t.0]
+**Google Docs**: [Link Dokumentasi Google Docs](https://docs.google.com/document/d/1bbeGj649kB4TlVtWBhqFZHt-Nfvc7Ev30XBNnAMqTaU/edit?usp=sharing)
