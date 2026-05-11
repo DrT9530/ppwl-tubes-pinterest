@@ -1,0 +1,17 @@
+{
+  "name": "ppwl-tubes-pinterest",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:fe": "bun --filter frontend dev",
+    "dev:be": "bun --filter backend dev",
+    "dev": "bun run dev:be & bun run dev:fe",
+    "db:migrate": "bun --filter backend prisma migrate dev",
+    "db:studio": "bun --filter backend prisma studio",
+    "db:generate": "bun --filter backend prisma generate",
+    "build": "bun --filter frontend build"
+  }
+}
