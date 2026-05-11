@@ -1,7 +1,31 @@
+import { useState, useEffect } from "react";
+import { useAuthStore } from "../stores/auth.store";
+import { OnboardingModal } from "../components/OnboardingModal";
+
 // pages/HomePage.tsx — Home feed page (placeholder for Bila's domain)
 export function HomePage() {
+  const { user } = useAuthStore();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const onboarded = localStorage.getItem(`pinterest_onboarded_${user.id}`);
+      if (!onboarded) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [user]);
+
+  const handleOnboardingComplete = () => {
+    if (user) {
+      localStorage.setItem(`pinterest_onboarded_${user.id}`, "true");
+    }
+    setShowOnboarding(false);
+  };
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto relative">
+      {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
       <div className="text-center py-20">
         <h2 className="text-3xl font-bold mb-4" style={{ color: "var(--color-text-primary)" }}>
           Welcome to Pinterest Clone

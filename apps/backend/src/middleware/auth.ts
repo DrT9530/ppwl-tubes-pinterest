@@ -15,7 +15,7 @@ export const jwtPlugin = new Elysia({ name: "jwt-plugin" }).use(
  * Auth guard middleware — derives `user` from JWT token.
  * Extracts token from Authorization header or cookie.
  */
-export const authGuard = new Elysia({ name: "auth-guard" })
+export const authGuard = (app: Elysia) => app
   .use(jwtPlugin)
   .derive(async ({ jwt, request, set }) => {
     // Try Authorization header first
@@ -96,7 +96,7 @@ export const authGuard = new Elysia({ name: "auth-guard" })
  * Optional auth — derives `user` if token exists, but doesn't block.
  * Used for public routes where auth data is optionally needed (e.g., checking isLiked).
  */
-export const optionalAuth = new Elysia({ name: "optional-auth" })
+export const optionalAuth = (app: Elysia) => app
   .use(jwtPlugin)
   .derive(async ({ jwt, request }) => {
     const authHeader = request.headers.get("Authorization");

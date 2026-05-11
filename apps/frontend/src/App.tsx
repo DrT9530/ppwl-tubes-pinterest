@@ -49,6 +49,15 @@ function AppContent() {
   const { fetchUser } = useAuthStore();
 
   useEffect(() => {
+    // Tangkap token dari URL (dikirim oleh Google OAuth Backend)
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("auth_token", token);
+      // Bersihkan URL dari token agar rapi dan aman
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     fetchUser();
   }, [fetchUser]);
 

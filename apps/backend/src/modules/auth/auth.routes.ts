@@ -5,6 +5,8 @@ import { prisma } from "../../lib/prisma";
 import { jwtPlugin, authGuard } from "../../middleware/auth";
 import { registerSchema, loginSchema } from "shared/validators";
 import type { ApiResponse, AuthResponse, UserDTO } from "shared/types";
+import { generateState, generateCodeVerifier } from "arctic";
+import { google } from "../../lib/arctic";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .use(jwtPlugin)
@@ -194,6 +196,104 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       }),
     }
   )
+
+  // ─── GET /auth/google ──────────────────────────────────────────────
+  .get("/google", async ({ cookie: { oauth_state, oauth_code_verifier }, redirect }) => {
+    const state = generateState();
+    const codeVerifier = generateCodeVerifier();
+    
+    const url = google.createAuthorizationURL(state, codeVerifier, [
+      "profile",
+      "email"
+    ]);
+
+    oauth_state.set({
+      value: state,
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 60 * 10 // 10 minutes
+    });
+
+    oauth_code_verifier.set({
+      value: codeVerifier,
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 60 * 10
+    });
+
+    return redirect(url.toString());
+  })
+
+  // ─── GET /auth/google/callback ─────────────────────────────────────
+  .get("/google/callback", async ({ query, cookie: { oauth_state, oauth_code_verifier, auth_token }, jwt, set, redirect }) => {
+    const code = query.code;
+    const state = query.state;
+    const storedState = oauth_state?.value;
+    const storedCodeVerifier = oauth_code_verifier?.value;
+
+    if (!code || !state || !storedState || !storedCodeVerifier || state !== storedState) {
+      set.status = 400;
+      return { success: false, message: "Invalid request or expired session" };
+    }
+
+    try {
+      const tokens = await google.validateAuthorizationCode(code, storedCodeVerifier);
+      
+      const googleUserResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+        headers: {
+          Authorization: `Bearer ${tokens.accessToken()}`
+        }
+      });
+      const googleUser = await googleUserResponse.json();
+
+      if (!googleUser.email) {
+        set.status = 400;
+        return { success: false, message: "No email provided from Google" };
+      }
+
+      // Find or create user
+      let user = await prisma.user.findUnique({
+        where: { email: googleUser.email }
+      });
+
+      if (!user) {
+        // Create random unique username from email
+        const baseUsername = googleUser.email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+        const uniqueSuffix = Math.random().toString(36).substring(2, 6);
+        
+        user = await prisma.user.create({
+          data: {
+            email: googleUser.email,
+            username: `${baseUsername}${uniqueSuffix}`,
+            provider: "GOOGLE",
+            avatarUrl: googleUser.picture,
+          }
+        });
+      }
+
+      // Login user
+      const token = await jwt.sign({ userId: user.id });
+
+      auth_token.set({
+        value: token,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60,
+        path: "/",
+      });
+
+      // Redirect back to frontend with token in URL so frontend can save it to localStorage
+      const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
+      return redirect(`${frontendUrl}/?token=${token}`);
+    } catch (e) {
+      console.error("Google OAuth error:", e);
+      set.status = 500;
+      return { success: false, message: "Internal server error during authentication" };
+    }
+  })
 
   // ─── POST /auth/logout ─────────────────────────────────────────────
   .use(authGuard)
