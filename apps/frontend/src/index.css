@@ -471,7 +471,369 @@ body {
   color: var(--color-text-primary);
 }
 
-/* ─── Navbar ──────────────────────────────────────────────────────── */
+/* ─── App Layout (Sidebar + Main) ────────────────────────────────── */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────────────── */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 20px;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border-light);
+  z-index: 50;
+}
+
+/* Top group: logo + all main nav items packed together */
+.sidebar-top-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* Bottom group: settings icon at the very bottom */
+.sidebar-bottom-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  color: var(--color-pinterest-red);
+  transition: background-color 0.2s;
+  margin-bottom: 4px;
+  text-decoration: none;
+}
+
+.sidebar-logo:hover {
+  background-color: var(--color-surface-secondary);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  border: none;
+  background: none;
+  position: relative;
+}
+
+.sidebar-nav-item:hover {
+  background-color: var(--color-surface-secondary);
+}
+
+.sidebar-nav-item.active {
+  color: white;
+}
+
+/* Filled circle behind the active icon */
+.sidebar-nav-item.active::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: var(--radius-full);
+  background-color: #111;
+  z-index: -1;
+}
+
+/* Push main content to the right of sidebar */
+.app-layout .app-main {
+  margin-left: 72px;
+}
+
+/* ─── Pin Card Hover Overlay ──────────────────────────────────────── */
+.pin-card {
+  position: relative;
+  z-index: 1;
+}
+
+/* Elevate card above siblings when dropdown is open */
+.pin-card-elevated {
+  z-index: 50;
+}
+
+.pin-card-image-wrapper {
+  position: relative;
+  border-radius: 16px;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.pin-save-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: none;
+  background-color: #e60023;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  z-index: 2;
+}
+
+.pin-save-btn:hover {
+  background-color: #ad081b;
+}
+
+.pin-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: none;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #111;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 2;
+}
+
+.pin-action-btn:hover {
+  background-color: #fff;
+  transform: scale(1.05);
+}
+
+/* ─── Pin More Menu (Three-dots dropdown) ─────────────────────────── */
+.pin-more-menu {
+  position: fixed;
+  width: 236px;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 9999;
+  animation: pinMenuSlideDown 0.15s ease;
+}
+
+@keyframes pinMenuSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pin-more-menu-hint {
+  padding: 16px 16px 12px;
+  font-size: 12px;
+  color: #767676;
+  line-height: 1.4;
+  border-bottom: 1px solid #efefef;
+}
+
+.pin-more-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.1s ease;
+  font-family: var(--font-sans);
+}
+
+.pin-more-menu-item:hover {
+  background-color: #f5f5f5;
+}
+
+.pin-more-menu-item.danger {
+  color: #cc0000;
+}
+
+.pin-more-menu-item.danger:hover {
+  background-color: #fff0f0;
+}
+
+/* ─── Masonry Feed Container & Grid ──────────────────────────────── */
+.masonry-feed-container {
+  width: 100%;
+  padding: 8px 16px 32px;
+  max-width: 2000px;
+  margin: 0 auto;
+}
+
+.masonry-grid {
+  columns: 5;
+  column-gap: 16px;
+}
+
+@media (max-width: 1600px) {
+  .masonry-grid { columns: 4; }
+}
+
+@media (max-width: 1200px) {
+  .masonry-grid { columns: 3; }
+}
+
+@media (max-width: 900px) {
+  .masonry-grid { columns: 2; }
+}
+
+@media (max-width: 500px) {
+  .masonry-grid { columns: 1; }
+}
+
+/* ─── Search Header ───────────────────────────────────────────────── */
+.search-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--color-surface);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.search-header-bar {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-header-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-header-input {
+  width: 100%;
+  padding: 12px 100px 12px 44px;
+  background-color: var(--color-surface-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--radius-full);
+  font-size: 16px;
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+  outline: none;
+  font-family: var(--font-sans);
+}
+
+.search-header-input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.search-header-input:focus {
+  background-color: var(--color-surface);
+  border-color: var(--color-pinterest-red);
+  box-shadow: 0 0 0 3px var(--color-pinterest-red-light);
+}
+
+.search-header-actions {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.search-header-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.search-header-action-btn:hover {
+  background-color: var(--color-border-light);
+  color: var(--color-text-primary);
+}
+
+.search-header-avatar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: background-color 0.2s;
+}
+
+.search-header-avatar:hover {
+  background-color: var(--color-surface-secondary);
+}
+
+.search-header-avatar img,
+.search-header-avatar > div:first-child {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+}
+
+/* ─── Navbar (Legacy — kept for LandingPage/Guest routes) ─────────── */
 .navbar {
   position: sticky;
   top: 0;

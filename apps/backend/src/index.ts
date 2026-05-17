@@ -3,6 +3,7 @@ import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { authRoutes } from "./modules/auth";
 import { profileRoutes } from "./modules/profile";
+import { postRoutes } from "./modules/post";
 
 const PORT = process.env.PORT || 3000;
 
@@ -42,6 +43,7 @@ const app = new Elysia()
   // ─── Feature Routes ──────────────────────────────────────────────
   .use(authRoutes)
   .use(profileRoutes)
+  .use(postRoutes)
 
   // ─── Start Server ────────────────────────────────────────────────
   .listen(PORT);
