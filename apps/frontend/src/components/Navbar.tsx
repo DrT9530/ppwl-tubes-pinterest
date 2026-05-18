@@ -1,6 +1,6 @@
 // components/Navbar.tsx — Main navigation bar
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, Bell, MessageCircle, User, LogOut, Plus } from "lucide-react";
+import { Search, Bell, MessageCircle, User, LogOut } from "lucide-react";
 import { useAuthStore } from "../stores/auth.store";
 import { useState, useRef, useEffect } from "react";
 

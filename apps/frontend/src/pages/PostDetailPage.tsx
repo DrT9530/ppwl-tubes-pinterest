@@ -1,169 +1,241 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Heart, MessageSquare, ArrowLeft, Send } from "lucide-react";
-
-// Data detail yang dicocokkan berdasarkan ID yang di-klik dari Homepage
-const POST_DATA_STORE: Record<string, any> = {
-  "1": { imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800...", caption: "Aesthetics abstract background wave painting. Sangat cocok untuk wallpaper hp atau inspirasi desain interior kamar kamu.", username: "bila_design" },
-  "2": { imageUrl: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800...", caption: "Retro Floral Art Illustration dengan warna-warna hangat tahun 70an.", username: "vintage_vibes" },
-  "3": { imageUrl: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=800...", caption: "Neon Fluid Typography art dengan perpaduan warna ungu dan biru elektrik.", username: "cyber_art" },
-  "4": { imageUrl: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800...", caption: "Minimalist Room Interior Setup untuk kamar tidur berukuran 3x3.", username: "cozy_space" },
-  "5": { imageUrl: "https://images.unsplash.com/photo-1549490349-8643362247b5?w=800...", caption: "Oil Painting Texture sapuan kuas tebal yang artistik.", username: "painter_hub" },
-  "6": { imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800...", caption: "Yosemite Valley Landscape pemandangan alam yang megah di sore hari.", username: "nature_geo" },
-};
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { Heart, MessageCircle, ArrowLeft, Upload, MoreHorizontal, Smile, Image as ImageIcon, Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { postService } from "../services/post.service";
+import { useAuthStore } from "../stores/auth.store";
 
 export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [isLiked, setIsLiked] = useState(false);
-  const [commentText, setCommentText] = useState("");
-
-  const currentData = POST_DATA_STORE[id || "1"] || POST_DATA_STORE["1"];
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
   
-  const [post, setPost] = useState<any>({
-    id: id || "1",
-    imageUrl: currentData.imageUrl.includes("...") ? "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=60" : currentData.imageUrl,
-    caption: currentData.caption,
-    creator: {
-      username: currentData.username,
-      avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${currentData.username}`,
-    },
-    likeCount: 142,
-    comments: [
-      { id: "c1", username: "dika_reza", text: "Keren banget warnanya! Kakak bikin pakai software apa?" },
-      { id: "c2", username: "siti_s", text: "Izin pin dan save buat bahan referensi ya kak 🙌" },
-    ]
+  const [commentText, setCommentText] = useState("");
+  // Local state for optimistic UI 
+  const [localIsLiked, setLocalIsLiked] = useState(false);
+  const [localLikeCount, setLocalLikeCount] = useState(0);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["post", id],
+    queryFn: () => postService.getById(id as string),
+    enabled: !!id,
   });
 
+  const { data: relatedData } = useQuery({
+    queryKey: ["relatedPosts"],
+    queryFn: () => postService.getFeed(1, 20),
+  });
+
+  // Sync local state when data loads
   useEffect(() => {
-    const freshData = POST_DATA_STORE[id || "1"] || POST_DATA_STORE["1"];
-    setPost({
-      id: id || "1",
-      imageUrl: freshData.imageUrl.includes("...") ? "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=60" : freshData.imageUrl,
-      caption: freshData.caption,
-      creator: {
-        username: freshData.username,
-        avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${freshData.username}`,
-      },
-      likeCount: 142,
-      comments: [
-        { id: "c1", username: "dika_reza", text: "Keren banget warnanya! Kakak bikin pakai software apa?" },
-        { id: "c2", username: "siti_s", text: "Izin pin dan save buat bahan referensi ya kak 🙌" },
-      ]
-    });
-    setIsLiked(false);
-  }, [id]);
+    if (data?.data) {
+      setLocalIsLiked(data.data.isLiked || false);
+      setLocalLikeCount(data.data.likeCount || 0);
+    }
+  }, [data]);
 
   const handleLike = () => {
-    setIsLiked(!isLiked);
-    setPost((prev: any) => ({
-      ...prev,
-      likeCount: isLiked ? prev.likeCount - 1 : prev.likeCount + 1
-    }));
+    setLocalIsLiked(!localIsLiked);
+    setLocalLikeCount(prev => localIsLiked ? prev - 1 : prev + 1);
   };
 
-  const handleAddComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentText.trim()) return;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="spinner spinner-lg" style={{ borderColor: "#e9e9e9", borderTopColor: "#e60023", borderWidth: "4px", width: "48px", height: "48px" }} />
+      </div>
+    );
+  }
 
-    const newComment = {
-      id: Date.now().toString(),
-      username: "kamu_user",
-      text: commentText.trim(),
-    };
+  if (isError || !data?.data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <h2 className="text-xl font-semibold mb-2">Pin not found</h2>
+        <button onClick={() => navigate(-1)} className="px-5 py-3 mt-4 bg-gray-100 rounded-full font-semibold hover:bg-gray-200 transition-colors">Go back to feed</button>
+      </div>
+    );
+  }
 
-    setPost((prev: any) => ({
-      ...prev,
-      comments: [...prev.comments, newComment],
-    }));
-    setCommentText("");
-  };
+  const post = data.data;
+  const relatedPosts = relatedData?.data || [];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Tombol Kembali yang Estetik */}
-      <Link to="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-semibold transition bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full text-sm">
-        <ArrowLeft className="w-4 h-4" /> Kembali ke Feed
-      </Link>
+    <div className="flex justify-center w-full max-w-[1800px] mx-auto relative px-4 sm:px-6 lg:px-8 pt-8 pb-24">
+      
+      {/* Sticky Back Button */}
+      <div className="hidden lg:flex sticky top-24 self-start mr-6 xl:mr-10 shrink-0 z-20">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors bg-white shadow-[0_0_8px_rgba(0,0,0,0.1)]"
+          title="Back"
+        >
+          <ArrowLeft size={24} strokeWidth={2.5} className="text-[#111]" />
+        </button>
+      </div>
 
-      {/* CARD DESAIN UTAMA PIN DETAIL */}
-      <div className="bg-white rounded-[32px] shadow-2xl border border-gray-100 overflow-hidden grid grid-cols-1 md:grid-cols-2 min-h-[500px]">
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 w-full max-w-[1400px]">
         
-        {/* Kolom Kiri: Gambar Postingan */}
-        <div className="bg-gray-50 flex items-center justify-center p-6 border-b md:border-b-0 md:border-r border-gray-100">
-          <img
-            src={post.imageUrl}
-            alt="Detail Pin"
-            className="w-full h-auto max-h-[65vh] object-contain rounded-2xl"
-          />
-        </div>
-
-        {/* Kolom Kanan: Panel Konten & Interaksi */}
-        <div className="p-8 flex flex-col justify-between">
-          <div>
-            {/* Atas: Bar Interaksi & Akun */}
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
-              <div className="flex items-center gap-3">
-                <img src={post.creator.avatarUrl} alt="avatar" className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200" />
-                <span className="text-sm font-bold text-gray-900">{post.creator.username}</span>
-              </div>
-
-              {/* Tombol Like */}
-              <button
+        {/* LEFT COLUMN: Pin Detail (Single Column Layout) */}
+        <div className="w-full lg:w-[508px] shrink-0 flex flex-col mx-auto lg:mx-0">
+          
+          {/* Action Bar (Sticky) */}
+          <div className="flex items-center justify-between pb-3 sticky top-[76px] bg-white z-10 pt-2">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button 
                 onClick={handleLike}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold transition ${
-                  isLiked 
-                    ? "bg-red-50 border-red-200 text-red-600 shadow-sm" 
-                    : "bg-gray-100 border-transparent text-gray-700 hover:bg-gray-200"
-                }`}
+                className="flex items-center gap-1.5 hover:bg-gray-100 px-3 py-3 rounded-full transition-colors font-semibold text-[15px] text-[#111]"
               >
-                <Heart className={`w-4 h-4 ${isLiked ? "fill-red-600 text-red-600" : ""}`} />
-                <span>{post.likeCount}</span>
+                <Heart size={20} strokeWidth={2.5} className={localIsLiked ? "fill-[#e60023] text-[#e60023]" : ""} />
+                {localLikeCount > 0 && <span>{localLikeCount}</span>}
+              </button>
+              <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
+                <MessageCircle size={20} strokeWidth={2.5} />
+              </button>
+              <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
+                <Upload size={20} strokeWidth={2.5} />
+              </button>
+              <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
+                <MoreHorizontal size={20} strokeWidth={2.5} />
               </button>
             </div>
+            <button className="bg-[#e60023] hover:bg-[#ad081b] text-white font-semibold rounded-full px-5 py-3.5 text-[15px] transition-colors">
+              Save
+            </button>
+          </div>
 
-            {/* Tengah: Caption */}
-            <div className="mb-6">
-              <h1 className="text-xl font-extrabold text-gray-900 mb-3">Deskripsi Gambar</h1>
-              <p className="text-gray-600 text-sm leading-relaxed">{post.caption}</p>
+          {/* Main Image */}
+          <div className="w-full relative rounded-[32px] overflow-hidden mb-6 group cursor-zoom-in" style={{ boxShadow: "0 0 0 1px rgba(0,0,0,0.05)" }}>
+            <img 
+              src={post.imageUrl} 
+              alt={post.caption || "Pin image"} 
+              className="w-full h-auto max-h-[85vh] object-cover"
+            />
+            {/* AI modified pill (aesthetic detail) */}
+            <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white text-[13px] font-semibold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+              AI modified
             </div>
-
-            {/* Bawah: Kolom Komentar */}
-            <div className="border-t border-gray-100 pt-4">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5" /> Komentar ({post.comments.length})
-              </h3>
-              
-              <div className="space-y-3 max-h-[180px] overflow-y-auto pr-1">
-                {post.comments.map((c: any) => (
-                  <div key={c.id} className="text-xs bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                    <span className="font-bold text-gray-900 mr-2">{c.username}</span>
-                    <span className="text-gray-600 leading-normal">{c.text}</span>
-                  </div>
-                ))}
-              </div>
+            
+            {/* Interactive Image Tools */}
+            <div className="absolute bottom-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+               <button className="w-10 h-10 bg-white/90 backdrop-blur hover:bg-white rounded-full flex items-center justify-center text-[#111] shadow-sm transition-colors" title="Expand">
+                 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M11 5h2v14h-2zm-6 6h14v2H5z" transform="rotate(45, 12, 12)"/></svg>
+               </button>
+               <button className="w-10 h-10 bg-white/90 backdrop-blur hover:bg-white rounded-full flex items-center justify-center text-[#111] shadow-sm transition-colors" title="Visual search">
+                 <Search size={20} strokeWidth={2.5}/>
+               </button>
             </div>
           </div>
 
-          {/* Kolom Input Chat Komentar */}
-          <form onSubmit={handleAddComment} className="border-t border-gray-100 pt-4 mt-6 flex gap-2">
-            <input
-              type="text"
-              placeholder="Tulis komentar kamu di sini..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              className="flex-1 bg-gray-50 border border-transparent rounded-full px-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition"
-            />
-            <button
-              type="submit"
-              className="bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-full transition shadow-md disabled:opacity-40"
-              disabled={!commentText.trim()}
-            >
-              <Send className="w-3.5 h-3.5" />
-            </button>
-          </form>
+          {/* Title & Creator */}
+          <div className="px-2 mb-10">
+            {post.caption && (
+              <h1 className="text-2xl sm:text-[28px] font-semibold text-[#111] leading-tight mb-6 break-words">
+                {post.caption}
+              </h1>
+            )}
+            <div className="flex items-center justify-between">
+              <Link to={`/profile/${post.creator.id}`} className="flex items-center gap-3 group">
+                <img 
+                  src={post.creator.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.creator.username}`} 
+                  alt={post.creator.username} 
+                  className="w-[48px] h-[48px] rounded-full object-cover border border-gray-100 group-hover:brightness-95 transition-all" 
+                />
+                <span className="font-semibold text-[15px] text-[#111] group-hover:underline">{post.creator.username}</span>
+              </Link>
+              <button className="bg-[#e9e9e9] hover:bg-[#e2e2e2] text-[#111] font-semibold rounded-full px-5 py-3 text-[15px] transition-colors">
+                Follow
+              </button>
+            </div>
+          </div>
 
+          {/* Comments Section */}
+          <div className="px-2 pb-10">
+            <h2 className="font-semibold text-[20px] text-[#111] mb-6">
+              {post.commentCount > 0 ? `${post.commentCount} Comments` : "No comments yet"}
+            </h2>
+            
+            {post.comments && post.comments.length > 0 ? (
+              <div className="space-y-6 mb-8">
+                 {post.comments.map((c: any) => (
+                   <div key={c.id} className="flex gap-3 text-sm">
+                     <Link to={`/profile/${c.user.id}`} className="shrink-0">
+                       <img src={c.user?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${c.user?.username}`} className="w-[36px] h-[36px] rounded-full object-cover border border-gray-100" />
+                     </Link>
+                     <div>
+                       <span className="font-bold text-[#111] mr-2 hover:underline cursor-pointer">{c.user?.username}</span>
+                       <span className="text-[#111] leading-relaxed">{c.content}</span>
+                       <div className="text-xs text-[#767676] mt-2 flex items-center gap-4">
+                         <span>{new Date(c.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}</span>
+                         <button className="font-semibold hover:text-[#111]">Reply</button>
+                         <button className="hover:text-red-500 cursor-pointer transition-colors p-1 -ml-1"><Heart size={14} /></button>
+                       </div>
+                     </div>
+                   </div>
+                 ))}
+              </div>
+            ) : null}
+
+            {/* Comment Input */}
+            <div className="flex items-start gap-3 mt-4 relative">
+              <div className="w-[48px] h-[48px] rounded-full overflow-hidden shrink-0 bg-gray-100 border border-gray-200">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="You" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center font-bold text-[#111]">
+                    {user?.username?.[0]?.toUpperCase() || "U"}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 relative border border-[#cdcdcd] rounded-[24px] flex items-center px-4 py-3 focus-within:border-[#111] transition-colors shadow-sm">
+                <input 
+                  type="text" 
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Add a comment to start the conversation" 
+                  className="w-full bg-transparent outline-none text-[15px] text-[#111] pr-[84px] placeholder:text-[#767676]" 
+                />
+                <div className="flex items-center gap-0.5 text-[#767676] absolute right-3 top-1/2 -translate-y-1/2 bg-white pl-2 rounded-r-[24px]">
+                  <button className="hover:bg-gray-100 p-2 rounded-full transition-colors text-[#111]" title="Emoji"><Smile size={22} strokeWidth={2} /></button>
+                  <button className="hover:bg-gray-100 p-2 rounded-full transition-colors text-[#111]" title="Image"><ImageIcon size={22} strokeWidth={2} /></button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* RIGHT COLUMN: Masonry Grid of Related Pins */}
+        <div className="flex-1 min-w-0 pb-10 pt-2 lg:pt-0">
+           {/* Mobile only back button helper */}
+           <div className="lg:hidden flex items-center gap-3 mb-6 px-2">
+             <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100">
+                <ArrowLeft size={24} />
+             </button>
+             <h2 className="font-semibold text-[20px] text-[#111]">Explore more</h2>
+           </div>
+
+           <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-2 xl:columns-3 2xl:columns-4 gap-4">
+              {relatedPosts.map((relatedPost: any) => (
+                 <Link to={`/post/${relatedPost.id}`} key={relatedPost.id} className="block mb-4 break-inside-avoid group relative rounded-2xl overflow-hidden cursor-zoom-in">
+                    <img 
+                      src={relatedPost.imageUrl} 
+                      alt={relatedPost.caption || "Related pin"} 
+                      loading="lazy"
+                      className="w-full h-auto object-cover rounded-[20px] shadow-sm transition-transform duration-300 group-hover:brightness-[0.85]"
+                    />
+                    {/* Hover Overlay like main page */}
+                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-between pointer-events-none">
+                       <div className="flex justify-end gap-2 self-end mt-auto">
+                          <button className="bg-black/50 backdrop-blur-md px-3 py-2 rounded-full text-white text-xs font-semibold flex items-center gap-1">
+                            <Heart size={14} fill="currentColor" /> {relatedPost.likeCount || 0}
+                          </button>
+                       </div>
+                    </div>
+                 </Link>
+              ))}
+           </div>
+        </div>
+
       </div>
     </div>
   );
-}
+}
