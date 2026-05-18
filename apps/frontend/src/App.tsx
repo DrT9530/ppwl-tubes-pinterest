@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
-import { Navbar } from "./components/Navbar";
+import { Sidebar } from "./components/Sidebar";
+import { SearchHeader } from "./components/SearchHeader";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { LandingPage } from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
@@ -19,6 +20,23 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+/**
+ * MainLayout — Sidebar + SearchHeader + Content area (for authenticated users)
+ */
+function MainLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="app-layout">
+      <Sidebar />
+      <div className="app-main">
+        <SearchHeader />
+        <main className="app-content">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
 
 /**
  * RootPage — Shows LandingPage for guests, HomePage for logged-in users
@@ -39,10 +57,9 @@ function RootPage() {
   }
 
   return (
-    <>
-      <Navbar />
+    <MainLayout>
       <HomePage />
-    </>
+    </MainLayout>
   );
 }
 
@@ -81,11 +98,11 @@ function AppContent() {
         } />
 
         {/* Authenticated routes with navbar */}
+        {/* Authenticated routes with sidebar layout */}
         <Route path="/profile/:id" element={
-          <>
-            <Navbar />
+          <MainLayout>
             <ProtectedRoute><ProfilePage /></ProtectedRoute>
-          </>
+          </MainLayout>
         } />
       </Routes>
     </div>
