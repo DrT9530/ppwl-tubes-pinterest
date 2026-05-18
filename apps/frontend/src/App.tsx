@@ -6,8 +6,9 @@ import { Sidebar } from "./components/Sidebar";
 import { SearchHeader } from "./components/SearchHeader";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { LandingPage } from "./pages/LandingPage";
-import { HomePage } from "./pages/HomePage";
+import HomePage from "./pages/HomePage";
 import { ProfilePage } from "./pages/ProfilePage";
+import PostDetailPage from "./pages/PostDetailPage"; // 👈 Impor halaman detail yang baru dibuat
 import { useAuthStore } from "./stores/auth.store";
 
 const queryClient = new QueryClient({
@@ -88,6 +89,15 @@ function AppContent() {
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/register" element={<Navigate to="/" replace />} />
 
+        {/* Route Detail Post (Akses gambar) — Dilengkapi dengan Navbar */}
+        <Route path="/post/:id" element={
+          <>
+            <Navbar />
+            <PostDetailPage />
+          </>
+        } />
+
+        {/* Authenticated routes with navbar */}
         {/* Authenticated routes with sidebar layout */}
         <Route path="/profile/:id" element={
           <MainLayout>
