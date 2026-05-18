@@ -89,12 +89,11 @@ function AppContent() {
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/register" element={<Navigate to="/" replace />} />
 
-        {/* Route Detail Post (Akses gambar) — Dilengkapi dengan Navbar */}
+        {/* Route Detail Post — Dengan Sidebar Layout */}
         <Route path="/post/:id" element={
-          <>
-            <Navbar />
-            <PostDetailPage />
-          </>
+          <MainLayout>
+            <ProtectedRoute><PostDetailPage /></ProtectedRoute>
+          </MainLayout>
         } />
 
         {/* Authenticated routes with navbar */}

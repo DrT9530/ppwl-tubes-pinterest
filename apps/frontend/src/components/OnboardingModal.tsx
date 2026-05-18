@@ -12,7 +12,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const [country, setCountry] = useState("Indonesia");
   const [language, setLanguage] = useState("English (US)");
   const [name, setName] = useState(user?.username || "");
-  const [gender, setGender] = useState("");
+  const [_gender, setGender] = useState("");
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
   const [isTurningFeed, setIsTurningFeed] = useState(false);
 

@@ -40,7 +40,6 @@ export function Sidebar() {
     navigate("/");
   };
 
-  const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
   // All main nav items grouped together (logo → home → ... → messages)
   const mainNavItems = [
