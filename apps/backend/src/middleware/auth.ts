@@ -1,64 +1,28 @@
-// middleware/auth.ts — JWT authentication middleware
-import { Elysia } from "elysia";
-import { jwt } from "@elysiajs/jwt";
+// middleware/auth.ts — JWT authentication middleware (Hono)
+import { createMiddleware } from "hono/factory";
+import { verify } from "hono/jwt";
+import { getCookie } from "hono/cookie";
 import { prisma } from "../lib/prisma";
 
-export const jwtPlugin = new Elysia({ name: "jwt-plugin" }).use(
-  jwt({
-    name: "jwt",
-    secret: process.env.JWT_SECRET || "dev-secret-key",
-    exp: "7d",
-  })
-);
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-key";
 
 /**
  * Auth guard middleware — derives `user` from JWT token.
  * Extracts token from Authorization header or cookie.
  */
-export const authGuard = (app: Elysia) => app
-  .use(jwtPlugin)
-  .derive(async ({ jwt, request, set }) => {
-    // Try Authorization header first
-    const authHeader = request.headers.get("Authorization");
-    let token: string | undefined;
+export const authGuard = createMiddleware(async (c, next) => {
+  const authHeader = c.req.header("Authorization");
+  const cookieToken = getCookie(c, "auth_token");
+  const token = authHeader?.replace("Bearer ", "") || cookieToken;
 
-    if (authHeader?.startsWith("Bearer ")) {
-      token = authHeader.slice(7);
-    }
+  if (!token) {
+    return c.json({ success: false, message: "Unauthorized — silakan login terlebih dahulu" }, 401);
+  }
 
-    // Fallback to cookie
-    if (!token) {
-      const cookieHeader = request.headers.get("Cookie");
-      if (cookieHeader) {
-        const cookies = Object.fromEntries(
-          cookieHeader.split(";").map((c) => {
-            const [key, ...val] = c.trim().split("=");
-            return [key, val.join("=")];
-          })
-        );
-        token = cookies["auth_token"];
-      }
-    }
-
-    if (!token) {
-      set.status = 401;
-      return {
-        user: null as any,
-        userId: null as any,
-      };
-    }
-
-    const payload = await jwt.verify(token);
-    if (!payload || !payload.userId) {
-      set.status = 401;
-      return {
-        user: null as any,
-        userId: null as any,
-      };
-    }
-
+  try {
+    const payload = await verify(token, JWT_SECRET) as { userId: string };
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId as string },
+      where: { id: payload.userId },
       select: {
         id: true,
         email: true,
@@ -70,66 +34,35 @@ export const authGuard = (app: Elysia) => app
     });
 
     if (!user) {
-      set.status = 401;
-      return {
-        user: null as any,
-        userId: null as any,
-      };
+      return c.json({ success: false, message: "Unauthorized — silakan login terlebih dahulu" }, 401);
     }
 
-    return {
-      user,
-      userId: user.id,
-    };
-  })
-  .onBeforeHandle(({ user, set }) => {
-    if (!user) {
-      set.status = 401;
-      return {
-        success: false,
-        message: "Unauthorized — silakan login terlebih dahulu",
-      };
-    }
-  });
+    c.set("user", user);
+    await next();
+  } catch {
+    return c.json({ success: false, message: "Unauthorized — silakan login terlebih dahulu" }, 401);
+  }
+});
 
 /**
  * Optional auth — derives `user` if token exists, but doesn't block.
  * Used for public routes where auth data is optionally needed (e.g., checking isLiked).
  */
-export const optionalAuth = (app: Elysia) => app
-  .use(jwtPlugin)
-  .derive(async ({ jwt, request }) => {
-    const authHeader = request.headers.get("Authorization");
-    let token: string | undefined;
+export const optionalAuth = createMiddleware(async (c, next) => {
+  const authHeader = c.req.header("Authorization");
+  const cookieToken = getCookie(c, "auth_token");
+  const token = authHeader?.replace("Bearer ", "") || cookieToken;
 
-    if (authHeader?.startsWith("Bearer ")) {
-      token = authHeader.slice(7);
-    }
+  if (!token) {
+    c.set("user", null);
+    await next();
+    return;
+  }
 
-    if (!token) {
-      const cookieHeader = request.headers.get("Cookie");
-      if (cookieHeader) {
-        const cookies = Object.fromEntries(
-          cookieHeader.split(";").map((c) => {
-            const [key, ...val] = c.trim().split("=");
-            return [key, val.join("=")];
-          })
-        );
-        token = cookies["auth_token"];
-      }
-    }
-
-    if (!token) {
-      return { user: null, userId: null };
-    }
-
-    const payload = await jwt.verify(token);
-    if (!payload || !payload.userId) {
-      return { user: null, userId: null };
-    }
-
+  try {
+    const payload = await verify(token, JWT_SECRET) as { userId: string };
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId as string },
+      where: { id: payload.userId },
       select: {
         id: true,
         email: true,
@@ -139,9 +72,9 @@ export const optionalAuth = (app: Elysia) => app
         createdAt: true,
       },
     });
-
-    return {
-      user: user || null,
-      userId: user?.id || null,
-    };
-  });
+    c.set("user", user || null);
+  } catch {
+    c.set("user", null);
+  }
+  await next();
+});

@@ -1,18 +1,19 @@
 // modules/profile/profile.routes.ts — User profile endpoints
-import { Elysia, t } from "elysia";
+import { Hono } from "hono";
 import { hash, compare } from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import { authGuard, optionalAuth } from "../../middleware/auth";
 import { updateProfileSchema, changePasswordSchema } from "shared/validators";
 import type { ApiResponse, UserDTO } from "shared/types";
 
-export const profileRoutes = new Elysia({ prefix: "/users" })
+export const profileRoutes = new Hono()
 
   // ─── GET /users/:id — Public Profile ────────────────────────────────
-  .use(optionalAuth)
   .get(
     "/:id",
-    async ({ params: { id }, set }) => {
+    optionalAuth,
+    async (c) => {
+      const id = c.req.param("id");
       const user = await prisma.user.findUnique({
         where: { id },
         select: {
@@ -30,14 +31,13 @@ export const profileRoutes = new Elysia({ prefix: "/users" })
       });
 
       if (!user) {
-        set.status = 404;
-        return {
+        return c.json({
           success: false,
           message: "User tidak ditemukan",
-        };
+        }, 404);
       }
 
-      return {
+      return c.json({
         success: true,
         message: "Profil berhasil diambil",
         data: {
@@ -48,28 +48,27 @@ export const profileRoutes = new Elysia({ prefix: "/users" })
           createdAt: user.createdAt.toISOString(),
           postCount: user._count.posts,
         },
-      };
-    },
-    {
-      params: t.Object({ id: t.String() }),
+      });
     }
   )
 
   // ─── Protected routes below ─────────────────────────────────────────
-  .use(authGuard)
 
   // ─── PATCH /users/me — Update Profile ───────────────────────────────
   .patch(
     "/me",
-    async ({ body, user, set }) => {
+    authGuard,
+    async (c) => {
+      const user = c.get("user") as any;
+      const body = await c.req.json();
       const parsed = updateProfileSchema.safeParse(body);
+      
       if (!parsed.success) {
-        set.status = 400;
-        return {
+        return c.json({
           success: false,
           message: "Validasi gagal",
           error: parsed.error.errors.map((e) => e.message).join(", "),
-        };
+        }, 400);
       }
 
       const { username, email } = parsed.data;
@@ -78,16 +77,14 @@ export const profileRoutes = new Elysia({ prefix: "/users" })
       if (username && username !== user.username) {
         const existing = await prisma.user.findUnique({ where: { username } });
         if (existing) {
-          set.status = 409;
-          return { success: false, message: "Username sudah digunakan" };
+          return c.json({ success: false, message: "Username sudah digunakan" }, 409);
         }
       }
 
       if (email && email !== user.email) {
         const existing = await prisma.user.findUnique({ where: { email } });
         if (existing) {
-          set.status = 409;
-          return { success: false, message: "Email sudah terdaftar" };
+          return c.json({ success: false, message: "Email sudah terdaftar" }, 409);
         }
       }
 
@@ -106,34 +103,28 @@ export const profileRoutes = new Elysia({ prefix: "/users" })
         },
       });
 
-      return {
+      return c.json({
         success: true,
         message: "Profil berhasil diperbarui",
         data: {
           ...updatedUser,
           createdAt: updatedUser.createdAt.toISOString(),
         },
-      } satisfies ApiResponse<UserDTO>;
-    },
-    {
-      body: t.Object({
-        username: t.Optional(t.String()),
-        email: t.Optional(t.String()),
-      }),
+      });
     }
   )
 
   // ─── PATCH /users/me/avatar — Update Avatar ────────────────────────
   .patch(
     "/me/avatar",
-    async ({ body, user, set }) => {
-      // For now, accept avatarUrl directly
-      // Later: integrate Cloudinary upload
+    authGuard,
+    async (c) => {
+      const user = c.get("user") as any;
+      const body = await c.req.json();
       const { avatarUrl } = body;
 
       if (!avatarUrl) {
-        set.status = 400;
-        return { success: false, message: "Avatar URL wajib diisi" };
+        return c.json({ success: false, message: "Avatar URL wajib diisi" }, 400);
       }
 
       const updatedUser = await prisma.user.update({
@@ -148,34 +139,32 @@ export const profileRoutes = new Elysia({ prefix: "/users" })
         },
       });
 
-      return {
+      return c.json({
         success: true,
         message: "Avatar berhasil diperbarui",
         data: {
           ...updatedUser,
           createdAt: updatedUser.createdAt.toISOString(),
         },
-      } satisfies ApiResponse<UserDTO>;
-    },
-    {
-      body: t.Object({
-        avatarUrl: t.String(),
-      }),
+      });
     }
   )
 
   // ─── PATCH /users/me/password — Change Password ────────────────────
   .patch(
     "/me/password",
-    async ({ body, user, set }) => {
+    authGuard,
+    async (c) => {
+      const user = c.get("user") as any;
+      const body = await c.req.json();
       const parsed = changePasswordSchema.safeParse(body);
+      
       if (!parsed.success) {
-        set.status = 400;
-        return {
+        return c.json({
           success: false,
           message: "Validasi gagal",
           error: parsed.error.errors.map((e) => e.message).join(", "),
-        };
+        }, 400);
       }
 
       const { currentPassword, newPassword } = parsed.data;
@@ -187,21 +176,19 @@ export const profileRoutes = new Elysia({ prefix: "/users" })
       });
 
       if (!dbUser?.passwordHash) {
-        set.status = 400;
-        return {
+        return c.json({
           success: false,
           message: "Akun OAuth tidak bisa mengubah password",
-        };
+        }, 400);
       }
 
       // Verify current password
       const isValid = await compare(currentPassword, dbUser.passwordHash);
       if (!isValid) {
-        set.status = 401;
-        return {
+        return c.json({
           success: false,
           message: "Password lama salah",
-        };
+        }, 401);
       }
 
       // Hash new password
@@ -211,15 +198,9 @@ export const profileRoutes = new Elysia({ prefix: "/users" })
         data: { passwordHash: newHash },
       });
 
-      return {
+      return c.json({
         success: true,
         message: "Password berhasil diubah",
-      } satisfies ApiResponse;
-    },
-    {
-      body: t.Object({
-        currentPassword: t.String(),
-        newPassword: t.String(),
-      }),
+      });
     }
   );

@@ -1,0 +1,10 @@
+node_modules/
+src/
+prisma/
+*.ts
+tsconfig.json
+build.ts
+template.yaml
+.env
+.env.*
+test-*.ts

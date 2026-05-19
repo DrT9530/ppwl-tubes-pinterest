@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Pinterest Clone Backend - AWS Lambda
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs20.x
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        NODE_ENV: production
+        DATABASE_URL: !Ref DatabaseUrl
+        JWT_SECRET: !Ref JwtSecret
+        GOOGLE_CLIENT_ID: !Ref GoogleClientId
+        GOOGLE_CLIENT_SECRET: !Ref GoogleClientSecret
+        FRONTEND_URL: !Ref FrontendUrl
+        BACKEND_URL: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+
+Parameters:
+  DatabaseUrl:
+    Type: String
+    Description: PostgreSQL connection string (RDS)
+  JwtSecret:
+    Type: String
+    Description: JWT signing secret
+    NoEcho: true
+  GoogleClientId:
+    Type: String
+    Description: Google OAuth Client ID
+  GoogleClientSecret:
+    Type: String
+    Description: Google OAuth Client Secret
+    NoEcho: true
+  FrontendUrl:
+    Type: String
+    Description: CloudFront URL atau S3 website URL
+    Default: "http://localhost:5173"
+
+Resources:
+  PinterestBackendFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: pinterest-clone-backend
+      Handler: lambda.handler
+      CodeUri: dist/
+      Description: Pinterest Clone API
+      Events:
+        ApiRoot:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+        ApiProxy:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  LambdaFunctionArn:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt PinterestBackendFunction.Arn
