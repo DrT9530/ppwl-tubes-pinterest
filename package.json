@@ -13,5 +13,8 @@
     "db:studio": "bun --filter backend prisma studio",
     "db:generate": "bun --filter backend prisma generate",
     "build": "bun --filter frontend build"
+  },
+  "dependencies": {
+    "date-fns": "^4.2.1"
   }
 }
