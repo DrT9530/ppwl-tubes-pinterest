@@ -19,4 +19,7 @@ export const postService = {
 
   delete: (id: string) =>
     api.delete<ApiResponse>(`/posts/${id}`),
+
+  addComment: (id: string, content: string) =>
+    api.post<ApiResponse>(`/posts/${id}/comments`, { content }),
 };
