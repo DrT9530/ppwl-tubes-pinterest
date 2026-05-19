@@ -1,20 +1,16 @@
-import { useState, useEffect, useRef } from "react"; // Diperbarui: Import digabung jadi satu di sini
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Heart, MessageCircle, ArrowLeft, Upload, MoreHorizontal, Smile, Image as ImageIcon, Search } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; 
+import { ArrowLeft, Upload, MoreHorizontal, Search, MessageCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query"; 
 import { postService } from "../services/post.service";
-import { useAuthStore } from "../stores/auth.store";
+import { LikeButton } from "../components/LikeButton";
+import { CommentSection } from "../components/CommentSection";
 
 export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const queryClient = useQueryClient(); 
   
-  const [commentText, setCommentText] = useState("");
-  const commentInputRef = useRef<HTMLInputElement>(null); // Ditambahkan: Ref untuk auto-focus input
-  
-  // Local state for optimistic UI 
+  // Local state for optimistic UI (used mainly as initial state for LikeButton)
   const [localIsLiked, setLocalIsLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
 
@@ -29,19 +25,6 @@ export default function PostDetailPage() {
     queryFn: () => postService.getFeed(1, 20),
   });
 
-  // === MUTATION UNTUK TAMBAH KOMENTAR ===
-  const commentMutation = useMutation({
-    mutationFn: (text: string) => postService.addComment(id as string, text),
-    onSuccess: () => {
-      setCommentText(""); 
-      queryClient.invalidateQueries({ queryKey: ["post", id] }); 
-    },
-    onError: (error) => {
-      console.error("Gagal mengirim komentar:", error);
-      alert("Gagal mengirim komentar, silakan coba lagi.");
-    }
-  });
-
   // Sync local state when data loads
   useEffect(() => {
     if (data?.data) {
@@ -49,30 +32,6 @@ export default function PostDetailPage() {
       setLocalLikeCount(data.data.likeCount || 0);
     }
   }, [data]);
-
-  const handleLike = () => {
-    setLocalIsLiked(!localIsLiked);
-    setLocalLikeCount(prev => localIsLiked ? prev - 1 : prev + 1);
-  };
-
-  // === HANDLER TOMBOL ENTER ===
-  const handleCommentSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && commentText.trim()) {
-      commentMutation.mutate(commentText);
-    }
-  };
-
-  // === HANDLER TOMBOL REPLY ===
-  const handleReply = (username: string) => {
-    if (username) {
-      setCommentText(`@${username} `); // Masukkan mention ke kolom chat
-      setTimeout(() => {
-        if (commentInputRef.current) {
-          commentInputRef.current.focus(); // Paksa kursor fokus ke input chat
-        }
-      }, 50);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -116,13 +75,11 @@ export default function PostDetailPage() {
           {/* Action Bar (Sticky) */}
           <div className="flex items-center justify-between pb-3 sticky top-[76px] bg-white z-10 pt-2">
             <div className="flex items-center gap-1 sm:gap-2">
-              <button 
-                onClick={handleLike}
-                className="flex items-center gap-1.5 hover:bg-gray-100 px-3 py-3 rounded-full transition-colors font-semibold text-[15px] text-[#111]"
-              >
-                <Heart size={20} strokeWidth={2.5} className={localIsLiked ? "fill-[#e60023] text-[#e60023]" : ""} />
-                {localLikeCount > 0 && <span>{localLikeCount}</span>}
-              </button>
+              <LikeButton 
+                postId={post.id} 
+                initialLiked={localIsLiked} 
+                initialCount={localLikeCount} 
+              />
               <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
                 <MessageCircle size={20} strokeWidth={2.5} />
               </button>
@@ -145,10 +102,12 @@ export default function PostDetailPage() {
               alt={post.caption || "Pin image"} 
               className="w-full h-auto max-h-[85vh] object-cover"
             />
+            {/* AI modified pill (aesthetic detail) */}
             <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white text-[13px] font-semibold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
               AI modified
             </div>
             
+            {/* Interactive Image Tools */}
             <div className="absolute bottom-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                <button className="w-10 h-10 bg-white/90 backdrop-blur hover:bg-white rounded-full flex items-center justify-center text-[#111] shadow-sm transition-colors" title="Expand">
                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M11 5h2v14h-2zm-6 6h14v2H5z" transform="rotate(45, 12, 12)"/></svg>
@@ -186,67 +145,17 @@ export default function PostDetailPage() {
             <h2 className="font-semibold text-[20px] text-[#111] mb-6">
               {post.commentCount > 0 ? `${post.commentCount} Comments` : "No comments yet"}
             </h2>
-            
-            {post.comments && post.comments.length > 0 ? (
-              <div className="space-y-6 mb-8">
-                 {post.comments.map((c: any) => (
-                   <div key={c.id} className="flex gap-3 text-sm">
-                     <Link to={`/profile/${c.user.id}`} className="shrink-0">
-                       <img src={c.user?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${c.user?.username}`} className="w-[36px] h-[36px] rounded-full object-cover border border-gray-100" />
-                     </Link>
-                     <div>
-                       <span className="font-bold text-[#111] mr-2 hover:underline cursor-pointer">{c.user?.username}</span>
-                       <span className="text-[#111] leading-relaxed">{c.content}</span>
-                       <div className="text-xs text-[#767676] mt-2 flex items-center gap-4">
-                         <span>{new Date(c.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}</span>
-                         {/* Diperbarui: Pemasangan handler klik tombol Reply */}
-                         <button 
-                           onClick={() => handleReply(c.user?.username)}
-                           className="font-semibold hover:text-[#111] transition-colors"
-                         >
-                           Reply
-                         </button>
-                         <button className="hover:text-red-500 cursor-pointer transition-colors p-1 -ml-1"><Heart size={14} /></button>
-                       </div>
-                     </div>
-                   </div>
-                 ))}
-              </div>
-            ) : null}
-
-            {/* Comment Input */}
-            <div className="flex items-start gap-3 mt-4 relative">
-              <div className="w-[48px] h-[48px] rounded-full overflow-hidden shrink-0 bg-gray-100 border border-gray-200">
-                {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="You" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center font-bold text-[#111]">
-                    {user?.username?.[0]?.toUpperCase() || "U"}
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 relative border border-[#cdcdcd] rounded-[24px] flex items-center px-4 py-3 focus-within:border-[#111] transition-colors shadow-sm">
-                <input 
-                  ref={commentInputRef} // Diperbarui: Memasang ref ke elemen input
-                  type="text" 
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  onKeyDown={handleCommentSubmit} 
-                  disabled={commentMutation.isPending} 
-                  placeholder={commentMutation.isPending ? "Sending comment..." : "Add a comment to start the conversation"} 
-                  className="w-full bg-transparent outline-none text-[15px] text-[#111] pr-[84px] placeholder:text-[#767676]" 
-                />
-                <div className="flex items-center gap-0.5 text-[#767676] absolute right-3 top-1/2 -translate-y-1/2 bg-white pl-2 rounded-r-[24px]">
-                  <button className="hover:bg-gray-100 p-2 rounded-full transition-colors text-[#111]" title="Emoji"><Smile size={22} strokeWidth={2} /></button>
-                  <button className="hover:bg-gray-100 p-2 rounded-full transition-colors text-[#111]" title="Image"><ImageIcon size={22} strokeWidth={2} /></button>
-                </div>
-              </div>
-            </div>
+            <CommentSection 
+              postId={post.id} 
+              comments={post.comments || []} 
+              onOpenAuthModal={() => {}} 
+            />
           </div>
         </div>
 
         {/* RIGHT COLUMN: Masonry Grid of Related Pins */}
         <div className="flex-1 min-w-0 pb-10 pt-2 lg:pt-0">
+           {/* Mobile only back button helper */}
            <div className="lg:hidden flex items-center gap-3 mb-6 px-2">
              <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100">
                 <ArrowLeft size={24} />
@@ -263,11 +172,15 @@ export default function PostDetailPage() {
                       loading="lazy"
                       className="w-full h-auto object-cover rounded-[20px] shadow-sm transition-transform duration-300 group-hover:brightness-[0.85]"
                     />
+                    {/* Hover Overlay like main page */}
                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-between pointer-events-none">
                        <div className="flex justify-end gap-2 self-end mt-auto">
-                          <button className="bg-black/50 backdrop-blur-md px-3 py-2 rounded-full text-white text-xs font-semibold flex items-center gap-1">
-                            <Heart size={14} fill="currentColor" /> {relatedPost.likeCount || 0}
-                          </button>
+                          <LikeButton 
+                            postId={relatedPost.id} 
+                            initialLiked={relatedPost.isLiked} 
+                            initialCount={relatedPost.likeCount || 0} 
+                            compact={true} 
+                          />
                        </div>
                     </div>
                  </Link>

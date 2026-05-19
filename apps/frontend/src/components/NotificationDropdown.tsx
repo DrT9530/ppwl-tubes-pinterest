@@ -165,9 +165,9 @@ function NotifItem({ notif }: { notif: NotificationDTO }) {
       </div>
 
       {/* Post thumbnail */}
-      {notif.post?.imageUrl && (
+      {(notif as any).post?.imageUrl && (
         <img
-          src={notif.post.imageUrl}
+          src={(notif as any).post.imageUrl}
           alt="post"
           className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
         />
