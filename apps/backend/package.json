@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
+    "build": "bun run build.ts",
     "db:seed": "bun prisma/seed.ts"
   },
   "prisma": {
@@ -13,15 +14,19 @@
   "dependencies": {
     "@elysiajs/cors": "^1.2.0",
     "@elysiajs/jwt": "^1.2.0",
+    "@hono/node-server": "^2.0.3",
     "@prisma/client": "6.19.3",
     "arctic": "^3.7.0",
     "bcryptjs": "^2.4.3",
     "elysia": "^1.2.0",
+    "hono": "^4.12.19",
     "shared": "workspace:*"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.161",
     "@types/bcryptjs": "^2.4.6",
     "@types/bun": "latest",
+    "esbuild": "^0.28.0",
     "prisma": "6.19.3",
     "typescript": "^5.7.0"
   }

@@ -1,18 +1,12 @@
-import { Elysia } from "elysia";
-import { cors } from "@elysiajs/cors";
-import { authRoutes } from "./modules/auth";
-import { profileRoutes } from "./modules/profile";
-import { postRoutes } from "./modules/post"; // Import rute post milik Bila
-import { commentRoutes } from "./modules/comment"; // [cite: 234]
+// src/index.ts — Entry point untuk development lokal (Bun)
+import { app } from "./app";
 
 const PORT = process.env.PORT || 3000;
 
-const app = new Elysia()
-  .use(cors())
-  .use(authRoutes)
-  .use(profileRoutes)
-  .use(postRoutes) // Mendaftarkan route posts ke server utama
-  .use(commentRoutes) // Mendaftarkan route milik Evelyn[cite: 232, 418]
-  .listen(PORT);
+// Bun native server
+export default {
+  port: PORT,
+  fetch: app.fetch,
+};
 
-console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
+console.log(`🦊 Hono is running at http://localhost:${PORT}`);
