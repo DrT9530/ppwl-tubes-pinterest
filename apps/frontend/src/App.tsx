@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { Sidebar } from "./components/Sidebar";
 import { SearchHeader } from "./components/SearchHeader";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { CreatePostModal } from "./components/CreatePostModal";
 import { LandingPage } from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
 import { ProfilePage } from "./pages/ProfilePage";
@@ -92,7 +93,13 @@ function AppContent() {
         {/* Route Detail Post — Dengan Sidebar Layout */}
         <Route path="/post/:id" element={
           <MainLayout>
-            <ProtectedRoute><PostDetailPage /></ProtectedRoute>
+            <PostDetailPage />
+          </MainLayout>
+        } />
+
+        <Route path="/create" element={
+          <MainLayout>
+            <ProtectedRoute><CreatePostModal /></ProtectedRoute>
           </MainLayout>
         } />
 

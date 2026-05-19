@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Heart, MessageCircle, ArrowLeft, Upload, MoreHorizontal, Smile, Image as ImageIcon, Search } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Heart, MessageCircle, ArrowLeft, Upload, MoreHorizontal, Smile, Image as ImageIcon, Search, Pencil, Trash2, Check, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { postService } from "../services/post.service";
 import { useAuthStore } from "../stores/auth.store";
 
@@ -9,8 +10,11 @@ export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   
   const [commentText, setCommentText] = useState("");
+  const [isEditingCaption, setIsEditingCaption] = useState(false);
+  const [captionDraft, setCaptionDraft] = useState("");
   // Local state for optimistic UI 
   const [localIsLiked, setLocalIsLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
@@ -31,6 +35,7 @@ export default function PostDetailPage() {
     if (data?.data) {
       setLocalIsLiked(data.data.isLiked || false);
       setLocalLikeCount(data.data.likeCount || 0);
+      setCaptionDraft(data.data.caption || "");
     }
   }, [data]);
 
@@ -38,6 +43,27 @@ export default function PostDetailPage() {
     setLocalIsLiked(!localIsLiked);
     setLocalLikeCount(prev => localIsLiked ? prev - 1 : prev + 1);
   };
+
+  const updateCaption = useMutation({
+    mutationFn: () => postService.update(id as string, { caption: captionDraft }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["post", id] });
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
+      setIsEditingCaption(false);
+      toast.success("Caption berhasil diperbarui");
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Gagal memperbarui caption"),
+  });
+
+  const deletePost = useMutation({
+    mutationFn: () => postService.delete(id as string),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success("Post berhasil dihapus");
+      navigate("/", { replace: true });
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Gagal menghapus post"),
+  });
 
   if (isLoading) {
     return (
@@ -58,6 +84,7 @@ export default function PostDetailPage() {
 
   const post = data.data;
   const relatedPosts = relatedData?.data || [];
+  const isOwner = user?.id === post.creator.id;
 
   return (
     <div className="flex justify-center w-full max-w-[1800px] mx-auto relative px-4 sm:px-6 lg:px-8 pt-8 pb-24">
@@ -94,6 +121,29 @@ export default function PostDetailPage() {
               <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
                 <Upload size={20} strokeWidth={2.5} />
               </button>
+              {isOwner && (
+                <>
+                  <button
+                    onClick={() => setIsEditingCaption(true)}
+                    className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]"
+                    title="Edit caption"
+                  >
+                    <Pencil size={20} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm("Hapus post ini?")) {
+                        deletePost.mutate();
+                      }
+                    }}
+                    className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#cc0000]"
+                    title="Delete post"
+                    disabled={deletePost.isPending}
+                  >
+                    <Trash2 size={20} strokeWidth={2.5} />
+                  </button>
+                </>
+              )}
               <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
                 <MoreHorizontal size={20} strokeWidth={2.5} />
               </button>
@@ -128,11 +178,53 @@ export default function PostDetailPage() {
 
           {/* Title & Creator */}
           <div className="px-2 mb-10">
-            {post.caption && (
+            {isEditingCaption ? (
+              <div className="mb-6">
+                <textarea
+                  value={captionDraft}
+                  maxLength={500}
+                  onChange={(event) => setCaptionDraft(event.target.value)}
+                  className="input-field min-h-[128px] resize-y text-xl font-semibold leading-tight"
+                  autoFocus
+                />
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-sm text-[#767676]">{captionDraft.length}/500</span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCaptionDraft(post.caption || "");
+                        setIsEditingCaption(false);
+                      }}
+                      className="btn-secondary px-4 py-2"
+                      disabled={updateCaption.isPending}
+                    >
+                      <X size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateCaption.mutate()}
+                      className="btn-primary px-4 py-2"
+                      disabled={updateCaption.isPending}
+                    >
+                      <Check size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : post.caption ? (
               <h1 className="text-2xl sm:text-[28px] font-semibold text-[#111] leading-tight mb-6 break-words">
                 {post.caption}
               </h1>
-            )}
+            ) : isOwner ? (
+              <button
+                type="button"
+                onClick={() => setIsEditingCaption(true)}
+                className="mb-6 text-left text-[15px] font-semibold text-[#767676] hover:text-[#111]"
+              >
+                Add caption
+              </button>
+            ) : null}
             <div className="flex items-center justify-between">
               <Link to={`/profile/${post.creator.id}`} className="flex items-center gap-3 group">
                 <img 
@@ -238,4 +330,4 @@ export default function PostDetailPage() {
       </div>
     </div>
   );
-}
+}

@@ -11,8 +11,8 @@ export const postService = {
   getById: (id: string) =>
     api.get<ApiResponse<PostDTO & { comments: any[] }>>(`/posts/${id}`),
 
-  create: (data: { imageUrl: string; caption?: string }) =>
-    api.post<ApiResponse<PostDTO>>("/posts", data),
+  create: (data: FormData) =>
+    api.upload<ApiResponse<PostDTO>>("/posts", data),
 
   update: (id: string, data: { caption?: string }) =>
     api.patch<ApiResponse>(`/posts/${id}`, data),

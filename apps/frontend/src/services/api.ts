@@ -58,6 +58,18 @@ class ApiClient {
     return this.handleResponse<T>(response);
   }
 
+  async upload<T>(path: string, formData: FormData, options?: FetchOptions): Promise<T> {
+    const url = this.buildUrl(path, options?.params);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.getHeaders(false),
+      credentials: "include",
+      body: formData,
+      ...options,
+    });
+    return this.handleResponse<T>(response);
+  }
+
   async patch<T>(path: string, body?: unknown, options?: FetchOptions): Promise<T> {
     const url = this.buildUrl(path, options?.params);
     const response = await fetch(url, {

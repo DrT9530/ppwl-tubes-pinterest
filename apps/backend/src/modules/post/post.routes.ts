@@ -1,8 +1,14 @@
 // modules/post/post.routes.ts — Post endpoints (Feed + CRUD)
 import { Elysia, t } from "elysia";
 import { prisma } from "../../lib/prisma";
+import {
+  deleteImageFromCloudinary,
+  uploadImageToCloudinary,
+} from "../../lib/cloudinary";
 import { authGuard, optionalAuth } from "../../middleware/auth";
 import type { ApiResponse, PostDTO, PaginatedResponse } from "shared/types";
+
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export const postRoutes = new Elysia({ prefix: "/posts" })
 
@@ -47,7 +53,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         prisma.post.count(),
       ]);
 
-      const data: PostDTO[] = posts.map((post) => ({
+      const data: PostDTO[] = posts.map((post: any) => ({
         id: post.id,
         imageUrl: post.imageUrl,
         caption: post.caption,
@@ -160,14 +166,14 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
           commentCount: post._count.comments,
           isLiked: user ? post.likes.length > 0 : false,
           createdAt: post.createdAt.toISOString(),
-          comments: post.comments.map((c) => ({
+          comments: post.comments.map((c: any) => ({
             id: c.id,
             content: c.content,
             user: {
               ...c.user,
               createdAt: c.user.createdAt.toISOString(),
             },
-            replies: c.replies.map((r) => ({
+            replies: c.replies.map((r: any) => ({
               id: r.id,
               content: r.content,
               user: {
@@ -179,7 +185,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
             createdAt: c.createdAt.toISOString(),
           })),
         },
-      } satisfies ApiResponse;
+      } satisfies ApiResponse<any>;
     },
     {
       params: t.Object({ id: t.String() }),
@@ -206,12 +212,52 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         };
       }
 
-      const { imageUrl, caption } = body;
+      const { image, caption } = body;
+
+      if (!image || !(image instanceof File)) {
+        set.status = 400;
+        return {
+          success: false,
+          message: "File gambar wajib diunggah",
+        };
+      }
+
+      if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
+        set.status = 400;
+        return {
+          success: false,
+          message: "File harus berupa gambar JPG, PNG, WEBP, atau GIF",
+        };
+      }
+
+      if (caption && caption.length > 500) {
+        set.status = 400;
+        return {
+          success: false,
+          message: "Caption maksimal 500 karakter",
+        };
+      }
+
+      let imageUrl: string;
+
+      try {
+        const uploaded = await uploadImageToCloudinary(image);
+        imageUrl = uploaded.imageUrl;
+      } catch (error) {
+        set.status = 500;
+        return {
+          success: false,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Gagal upload gambar ke Cloudinary",
+        };
+      }
 
       const post = await prisma.post.create({
         data: {
           imageUrl,
-          caption: caption || null,
+          caption: caption?.trim() || null,
           creatorId: user.id,
         },
         include: {
@@ -248,7 +294,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
     },
     {
       body: t.Object({
-        imageUrl: t.String(),
+        image: t.File(),
         caption: t.Optional(t.String()),
       }),
     }
@@ -270,9 +316,14 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         return { success: false, message: "Tidak memiliki akses" };
       }
 
+      if (body.caption && body.caption.length > 500) {
+        set.status = 400;
+        return { success: false, message: "Caption maksimal 500 karakter" };
+      }
+
       const updated = await prisma.post.update({
         where: { id },
-        data: { caption: body.caption },
+        data: { caption: body.caption?.trim() || null },
       });
 
       return {
@@ -284,7 +335,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
           caption: updated.caption,
           createdAt: updated.createdAt.toISOString(),
         },
-      } satisfies ApiResponse;
+      } satisfies ApiResponse<any>;
     },
     {
       params: t.Object({ id: t.String() }),
@@ -306,6 +357,19 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
       if (post.creatorId !== user.id) {
         set.status = 403;
         return { success: false, message: "Tidak memiliki akses" };
+      }
+
+      try {
+        await deleteImageFromCloudinary(post.imageUrl);
+      } catch (error) {
+        set.status = 500;
+        return {
+          success: false,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Gagal menghapus gambar dari Cloudinary",
+        };
       }
 
       await prisma.post.delete({ where: { id } });
