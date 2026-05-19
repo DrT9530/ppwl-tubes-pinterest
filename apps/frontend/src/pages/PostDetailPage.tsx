@@ -4,6 +4,7 @@ import { Heart, MessageCircle, ArrowLeft, Upload, MoreHorizontal, Smile, Image a
 import { useQuery } from "@tanstack/react-query";
 import { postService } from "../services/post.service";
 import { useAuthStore } from "../stores/auth.store";
+import { LikeButton } from "../components/LikeButton";
 
 export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -34,10 +35,7 @@ export default function PostDetailPage() {
     }
   }, [data]);
 
-  const handleLike = () => {
-    setLocalIsLiked(!localIsLiked);
-    setLocalLikeCount(prev => localIsLiked ? prev - 1 : prev + 1);
-  };
+  // handleLike dihapus karena sudah diurus oleh LikeButton
 
   if (isLoading) {
     return (
@@ -81,13 +79,11 @@ export default function PostDetailPage() {
           {/* Action Bar (Sticky) */}
           <div className="flex items-center justify-between pb-3 sticky top-[76px] bg-white z-10 pt-2">
             <div className="flex items-center gap-1 sm:gap-2">
-              <button 
-                onClick={handleLike}
-                className="flex items-center gap-1.5 hover:bg-gray-100 px-3 py-3 rounded-full transition-colors font-semibold text-[15px] text-[#111]"
-              >
-                <Heart size={20} strokeWidth={2.5} className={localIsLiked ? "fill-[#e60023] text-[#e60023]" : ""} />
-                {localLikeCount > 0 && <span>{localLikeCount}</span>}
-              </button>
+              <LikeButton 
+                postId={post.id} 
+                initialLiked={localIsLiked} 
+                initialCount={localLikeCount} 
+              />
               <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
                 <MessageCircle size={20} strokeWidth={2.5} />
               </button>
@@ -225,9 +221,12 @@ export default function PostDetailPage() {
                     {/* Hover Overlay like main page */}
                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-between pointer-events-none">
                        <div className="flex justify-end gap-2 self-end mt-auto">
-                          <button className="bg-black/50 backdrop-blur-md px-3 py-2 rounded-full text-white text-xs font-semibold flex items-center gap-1">
-                            <Heart size={14} fill="currentColor" /> {relatedPost.likeCount || 0}
-                          </button>
+                          <LikeButton 
+                            postId={relatedPost.id} 
+                            initialLiked={relatedPost.isLiked} 
+                            initialCount={relatedPost.likeCount || 0} 
+                            compact={true} 
+                          />
                        </div>
                     </div>
                  </Link>
