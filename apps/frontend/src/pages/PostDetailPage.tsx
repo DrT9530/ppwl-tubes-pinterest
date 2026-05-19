@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Heart, MessageCircle, ArrowLeft, Upload, MoreHorizontal, Smile, Image as ImageIcon, Search } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Diperbarui: Tambah useMutation & useQueryClient
 import { postService } from "../services/post.service";
 import { useAuthStore } from "../stores/auth.store";
 
@@ -9,6 +9,7 @@ export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const queryClient = useQueryClient(); // Tambahkan query client untuk refresh data
   
   const [commentText, setCommentText] = useState("");
   // Local state for optimistic UI 
@@ -26,6 +27,19 @@ export default function PostDetailPage() {
     queryFn: () => postService.getFeed(1, 20),
   });
 
+  // === MUTATION UNTUK TAMBAH KOMENTAR ===
+  const commentMutation = useMutation({
+    mutationFn: (text: string) => postService.addComment(id as string, text),
+    onSuccess: () => {
+      setCommentText(""); // Kosongkan input setelah sukses
+      queryClient.invalidateQueries({ queryKey: ["post", id] }); // Refresh data postingan agar komentar baru muncul
+    },
+    onError: (error) => {
+      console.error("Gagal mengirim komentar:", error);
+      alert("Gagal mengirim komentar, silakan coba lagi.");
+    }
+  });
+
   // Sync local state when data loads
   useEffect(() => {
     if (data?.data) {
@@ -37,6 +51,13 @@ export default function PostDetailPage() {
   const handleLike = () => {
     setLocalIsLiked(!localIsLiked);
     setLocalLikeCount(prev => localIsLiked ? prev - 1 : prev + 1);
+  };
+
+  // === HANDLER TOMBOL ENTER ===
+  const handleCommentSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && commentText.trim()) {
+      commentMutation.mutate(commentText);
+    }
   };
 
   if (isLoading) {
@@ -191,7 +212,9 @@ export default function PostDetailPage() {
                   type="text" 
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Add a comment to start the conversation" 
+                  onKeyDown={handleCommentSubmit} // DIUBAH: Sekarang mendengarkan ketukan Enter kamu
+                  disabled={commentMutation.isPending} // DIUBAH: Kunci input saat loading kirim data
+                  placeholder={commentMutation.isPending ? "Sending comment..." : "Add a comment to start the conversation"} 
                   className="w-full bg-transparent outline-none text-[15px] text-[#111] pr-[84px] placeholder:text-[#767676]" 
                 />
                 <div className="flex items-center gap-0.5 text-[#767676] absolute right-3 top-1/2 -translate-y-1/2 bg-white pl-2 rounded-r-[24px]">
@@ -238,4 +261,4 @@ export default function PostDetailPage() {
       </div>
     </div>
   );
-}
+}
