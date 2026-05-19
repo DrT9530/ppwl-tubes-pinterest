@@ -1,204 +1,136 @@
-// modules/auth/auth.routes.ts — Authentication endpoints
-import { Elysia, t } from "elysia";
+// modules/auth/auth.routes.ts — Versi Hono
+import { Hono } from "hono";
+import { sign, verify } from "hono/jwt";
+import { setCookie, getCookie } from "hono/cookie";
 import { hash, compare } from "bcryptjs";
 import { prisma } from "../../lib/prisma";
-import { jwtPlugin, authGuard } from "../../middleware/auth";
 import { registerSchema, loginSchema } from "shared/validators";
-import type { ApiResponse, AuthResponse, UserDTO } from "shared/types";
-import { generateState, generateCodeVerifier } from "arctic";
 import { google } from "../../lib/arctic";
 
-export const authRoutes = new Elysia({ prefix: "/auth" })
-  .use(jwtPlugin)
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-key";
 
-  // ─── POST /auth/register ───────────────────────────────────────────
-  .post(
-    "/register",
-    async ({ body, jwt, set, cookie: { auth_token } }) => {
-      // Validate input
-      const parsed = registerSchema.safeParse(body);
-      if (!parsed.success) {
-        set.status = 400;
-        return {
-          success: false,
-          message: "Validasi gagal",
-          error: parsed.error.errors.map((e) => e.message).join(", "),
-        };
-      }
+export const authRoutes = new Hono()
 
-      const { email, username, password } = parsed.data;
+  // POST /auth/register
+  .post("/register", async (c) => {
+    const body = await c.req.json();
+    const parsed = registerSchema.safeParse(body);
 
-      // Check if email already exists
-      const existingEmail = await prisma.user.findUnique({ where: { email } });
-      if (existingEmail) {
-        set.status = 409;
-        return {
-          success: false,
-          message: "Email sudah terdaftar",
-        };
-      }
-
-      // Check if username already exists
-      const existingUsername = await prisma.user.findUnique({ where: { username } });
-      if (existingUsername) {
-        set.status = 409;
-        return {
-          success: false,
-          message: "Username sudah digunakan",
-        };
-      }
-
-      // Hash password
-      const passwordHash = await hash(password, 12);
-
-      // Create user
-      const user = await prisma.user.create({
-        data: {
-          email,
-          username,
-          passwordHash,
-          provider: "EMAIL",
-        },
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          avatarUrl: true,
-          createdAt: true,
-        },
-      });
-
-      // Generate JWT
-      const token = await jwt.sign({ userId: user.id });
-
-      // Set cookie
-      auth_token.set({
-        value: token,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-        path: "/",
-      });
-
-      set.status = 201;
-      return {
-        success: true,
-        message: "Registrasi berhasil",
-        data: {
-          user: {
-            ...user,
-            createdAt: user.createdAt.toISOString(),
-          },
-          token,
-        },
-      } satisfies ApiResponse<AuthResponse>;
-    },
-    {
-      body: t.Object({
-        email: t.String(),
-        username: t.String(),
-        password: t.String(),
-      }),
+    if (!parsed.success) {
+      return c.json({ success: false, message: "Validasi gagal", error: parsed.error.errors.map(e => e.message).join(", ") }, 400);
     }
-  )
 
-  // ─── POST /auth/login ──────────────────────────────────────────────
-  .post(
-    "/login",
-    async ({ body, jwt, set, cookie: { auth_token } }) => {
-      // Validate input
-      const parsed = loginSchema.safeParse(body);
-      if (!parsed.success) {
-        set.status = 400;
-        return {
-          success: false,
-          message: "Validasi gagal",
-          error: parsed.error.errors.map((e) => e.message).join(", "),
-        };
-      }
+    const { email, username, password } = parsed.data;
 
-      const { email, password } = parsed.data;
+    const existingEmail = await prisma.user.findUnique({ where: { email } });
+    if (existingEmail) return c.json({ success: false, message: "Email sudah terdaftar" }, 409);
 
-      // Find user by email
+    const existingUsername = await prisma.user.findUnique({ where: { username } });
+    if (existingUsername) return c.json({ success: false, message: "Username sudah digunakan" }, 409);
+
+    const passwordHash = await hash(password, 12);
+    const user = await prisma.user.create({
+      data: { email, username, passwordHash, provider: "EMAIL" },
+      select: { id: true, email: true, username: true, avatarUrl: true, createdAt: true },
+    });
+
+    const token = await sign({ userId: user.id, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, JWT_SECRET);
+
+    const isProd = process.env.NODE_ENV === "production";
+    setCookie(c, "auth_token", token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
+      maxAge: 7 * 24 * 60 * 60,
+      path: "/",
+    });
+
+    return c.json({ success: true, message: "Registrasi berhasil", data: { user: { ...user, createdAt: user.createdAt.toISOString() }, token } }, 201);
+  })
+
+  // POST /auth/login
+  .post("/login", async (c) => {
+    const body = await c.req.json();
+    const parsed = loginSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return c.json({ success: false, message: "Validasi gagal" }, 400);
+    }
+
+    const { email, password } = parsed.data;
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, username: true, avatarUrl: true, passwordHash: true, provider: true, createdAt: true },
+    });
+
+    if (!user || !user.passwordHash) {
+      return c.json({ success: false, message: "Email atau password salah" }, 401);
+    }
+
+    const passwordMatch = await compare(password, user.passwordHash);
+    if (!passwordMatch) return c.json({ success: false, message: "Email atau password salah" }, 401);
+
+    const token = await sign({ userId: user.id, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, JWT_SECRET);
+
+    const isProd = process.env.NODE_ENV === "production";
+    setCookie(c, "auth_token", token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
+      maxAge: 7 * 24 * 60 * 60,
+      path: "/",
+    });
+
+    return c.json({
+      success: true,
+      message: "Login berhasil",
+      data: {
+        user: { id: user.id, email: user.email, username: user.username, avatarUrl: user.avatarUrl, createdAt: user.createdAt.toISOString() },
+        token,
+      },
+    });
+  })
+
+  // POST /auth/logout
+  .post("/logout", (c) => {
+    setCookie(c, "auth_token", "", { maxAge: 0, path: "/" });
+    return c.json({ success: true, message: "Logout berhasil" });
+  })
+
+  // GET /auth/me
+  .get("/me", async (c) => {
+    const authHeader = c.req.header("Authorization");
+    const cookieToken = getCookie(c, "auth_token");
+    const token = authHeader?.replace("Bearer ", "") || cookieToken;
+
+    console.log("[/auth/me] AuthHeader:", !!authHeader, "CookieToken:", !!cookieToken);
+
+    if (!token) {
+      console.log("[/auth/me] No token found!");
+      return c.json({ success: false, message: "Unauthorized" }, 401);
+    }
+
+    try {
+      const payload = await verify(token, JWT_SECRET, "HS256") as { userId: string };
+      console.log("[/auth/me] Payload verified:", payload.userId);
       const user = await prisma.user.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          avatarUrl: true,
-          passwordHash: true,
-          provider: true,
-          createdAt: true,
-        },
+        where: { id: payload.userId },
+        select: { id: true, email: true, username: true, avatarUrl: true, createdAt: true },
       });
-
       if (!user) {
-        set.status = 401;
-        return {
-          success: false,
-          message: "Email atau password salah",
-        };
+         console.log("[/auth/me] User not found in DB!");
+         return c.json({ success: false, message: "User tidak ditemukan" }, 404);
       }
-
-      // Check if user uses OAuth (no password)
-      if (!user.passwordHash) {
-        set.status = 401;
-        return {
-          success: false,
-          message: "Akun ini menggunakan Google OAuth. Silakan login via Google.",
-        };
-      }
-
-      // Compare password
-      const passwordMatch = await compare(password, user.passwordHash);
-      if (!passwordMatch) {
-        set.status = 401;
-        return {
-          success: false,
-          message: "Email atau password salah",
-        };
-      }
-
-      // Generate JWT
-      const token = await jwt.sign({ userId: user.id });
-
-      // Set cookie
-      auth_token.set({
-        value: token,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60,
-        path: "/",
-      });
-
-      return {
-        success: true,
-        message: "Login berhasil",
-        data: {
-          user: {
-            id: user.id,
-            email: user.email,
-            username: user.username,
-            avatarUrl: user.avatarUrl,
-            createdAt: user.createdAt.toISOString(),
-          },
-          token,
-        },
-      } satisfies ApiResponse<AuthResponse>;
-    },
-    {
-      body: t.Object({
-        email: t.String(),
-        password: t.String(),
-      }),
+      return c.json({ success: true, message: "OK", data: { ...user, createdAt: user.createdAt.toISOString() } });
+    } catch (e) {
+      console.log("[/auth/me] Token verify failed:", e);
+      return c.json({ success: false, message: "Token tidak valid" }, 401);
     }
-  )
+  })
 
-  // ─── GET /auth/google ──────────────────────────────────────────────
-  .get("/google", async ({ cookie: { oauth_state, oauth_code_verifier }, redirect }) => {
+  // GET /auth/google — Redirect ke Google OAuth
+  .get("/google", async (c) => {
+    const { generateState, generateCodeVerifier } = await import("arctic");
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
     
@@ -207,59 +139,55 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       "email"
     ]);
 
-    oauth_state.set({
-      value: state,
+    const isProd = process.env.NODE_ENV === "production";
+
+    setCookie(c, "oauth_state", state, {
       path: "/",
-      secure: process.env.NODE_ENV === "production",
+      secure: isProd,
       httpOnly: true,
-      maxAge: 60 * 10 // 10 minutes
+      maxAge: 60 * 10, // 10 minutes
+      sameSite: isProd ? "None" : "Lax",
     });
 
-    oauth_code_verifier.set({
-      value: codeVerifier,
+    setCookie(c, "oauth_code_verifier", codeVerifier, {
       path: "/",
-      secure: process.env.NODE_ENV === "production",
+      secure: isProd,
       httpOnly: true,
-      maxAge: 60 * 10
+      maxAge: 60 * 10,
+      sameSite: isProd ? "None" : "Lax",
     });
 
-    return redirect(url.toString());
+    return c.redirect(url.toString());
   })
 
-  // ─── GET /auth/google/callback ─────────────────────────────────────
-  .get("/google/callback", async ({ query, cookie: { oauth_state, oauth_code_verifier, auth_token }, jwt, set, redirect }) => {
-    const code = query.code;
-    const state = query.state;
-    const storedState = oauth_state?.value;
-    const storedCodeVerifier = oauth_code_verifier?.value;
+  // GET /auth/google/callback
+  .get("/google/callback", async (c) => {
+    const code = c.req.query("code");
+    const state = c.req.query("state");
+    const storedState = getCookie(c, "oauth_state");
+    const storedCodeVerifier = getCookie(c, "oauth_code_verifier");
 
     if (!code || !state || !storedState || !storedCodeVerifier || state !== storedState) {
-      set.status = 400;
-      return { success: false, message: "Invalid request or expired session" };
+      return c.json({ success: false, message: "Invalid request or expired session" }, 400);
     }
 
     try {
       const tokens = await google.validateAuthorizationCode(code, storedCodeVerifier);
       
       const googleUserResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
-        headers: {
-          Authorization: `Bearer ${tokens.accessToken()}`
-        }
+        headers: { Authorization: `Bearer ${tokens.accessToken()}` }
       });
       const googleUser = await googleUserResponse.json();
 
       if (!googleUser.email) {
-        set.status = 400;
-        return { success: false, message: "No email provided from Google" };
+        return c.json({ success: false, message: "No email provided from Google" }, 400);
       }
 
-      // Find or create user
       let user = await prisma.user.findUnique({
         where: { email: googleUser.email }
       });
 
       if (!user) {
-        // Create random unique username from email
         const baseUsername = googleUser.email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
         const uniqueSuffix = Math.random().toString(36).substring(2, 6);
         
@@ -273,55 +201,21 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         });
       }
 
-      // Login user
-      const token = await jwt.sign({ userId: user.id });
+      const token = await sign({ userId: user.id, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, JWT_SECRET);
 
-      auth_token.set({
-        value: token,
+      const isProd = process.env.NODE_ENV === "production";
+      setCookie(c, "auth_token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProd,
+        sameSite: isProd ? "None" : "Lax",
         maxAge: 7 * 24 * 60 * 60,
         path: "/",
       });
 
-      // Redirect back to frontend with token in URL so frontend can save it to localStorage
       const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
-      return redirect(`${frontendUrl}/?token=${token}`);
+      return c.redirect(`${frontendUrl}/?token=${token}`);
     } catch (e) {
       console.error("Google OAuth error:", e);
-      set.status = 500;
-      return { success: false, message: "Internal server error during authentication" };
+      return c.json({ success: false, message: "Internal server error during authentication" }, 500);
     }
-  })
-
-  // ─── POST /auth/logout ─────────────────────────────────────────────
-  .use(authGuard)
-  .post("/logout", ({ cookie: { auth_token } }) => {
-    auth_token.set({
-      value: "",
-      httpOnly: true,
-      maxAge: 0,
-      path: "/",
-    });
-
-    return {
-      success: true,
-      message: "Logout berhasil",
-    } satisfies ApiResponse;
-  })
-
-  // ─── GET /auth/me ──────────────────────────────────────────────────
-  .get("/me", ({ user }) => {
-    return {
-      success: true,
-      message: "Data user berhasil diambil",
-      data: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        avatarUrl: user.avatarUrl,
-        createdAt: user.createdAt.toISOString(),
-      },
-    } satisfies ApiResponse<UserDTO>;
   });
