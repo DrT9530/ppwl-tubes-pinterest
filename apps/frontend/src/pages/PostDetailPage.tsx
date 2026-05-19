@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Heart, MessageCircle, ArrowLeft, Upload, MoreHorizontal, Smile, Image as ImageIcon, Search } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; 
 import { postService } from "../services/post.service";
 import { useAuthStore } from "../stores/auth.store";
 import { LikeButton } from "../components/LikeButton";
@@ -10,9 +10,12 @@ export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const queryClient = useQueryClient(); 
   
   const [commentText, setCommentText] = useState("");
-  // Local state for optimistic UI 
+  const commentInputRef = useRef<HTMLInputElement>(null);
+  
+  // Local state for optimistic UI (used mainly as initial state for LikeButton)
   const [localIsLiked, setLocalIsLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
 
@@ -27,6 +30,19 @@ export default function PostDetailPage() {
     queryFn: () => postService.getFeed(1, 20),
   });
 
+  // === MUTATION UNTUK TAMBAH KOMENTAR ===
+  const commentMutation = useMutation({
+    mutationFn: (text: string) => postService.addComment(id as string, text),
+    onSuccess: () => {
+      setCommentText(""); 
+      queryClient.invalidateQueries({ queryKey: ["post", id] }); 
+    },
+    onError: (error) => {
+      console.error("Gagal mengirim komentar:", error);
+      alert("Gagal mengirim komentar, silakan coba lagi.");
+    }
+  });
+
   // Sync local state when data loads
   useEffect(() => {
     if (data?.data) {
@@ -36,6 +52,25 @@ export default function PostDetailPage() {
   }, [data]);
 
   // handleLike dihapus karena sudah diurus oleh LikeButton
+
+  // === HANDLER TOMBOL ENTER ===
+  const handleCommentSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && commentText.trim()) {
+      commentMutation.mutate(commentText);
+    }
+  };
+
+  // === HANDLER TOMBOL REPLY ===
+  const handleReply = (username: string) => {
+    if (username) {
+      setCommentText(`@${username} `); // Masukkan mention ke kolom chat
+      setTimeout(() => {
+        if (commentInputRef.current) {
+          commentInputRef.current.focus(); // Paksa kursor fokus ke input chat
+        }
+      }, 50);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -162,7 +197,12 @@ export default function PostDetailPage() {
                        <span className="text-[#111] leading-relaxed">{c.content}</span>
                        <div className="text-xs text-[#767676] mt-2 flex items-center gap-4">
                          <span>{new Date(c.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}</span>
-                         <button className="font-semibold hover:text-[#111]">Reply</button>
+                         <button 
+                           onClick={() => handleReply(c.user?.username)}
+                           className="font-semibold hover:text-[#111] transition-colors"
+                         >
+                           Reply
+                         </button>
                          <button className="hover:text-red-500 cursor-pointer transition-colors p-1 -ml-1"><Heart size={14} /></button>
                        </div>
                      </div>
@@ -184,10 +224,13 @@ export default function PostDetailPage() {
               </div>
               <div className="flex-1 relative border border-[#cdcdcd] rounded-[24px] flex items-center px-4 py-3 focus-within:border-[#111] transition-colors shadow-sm">
                 <input 
+                  ref={commentInputRef}
                   type="text" 
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Add a comment to start the conversation" 
+                  onKeyDown={handleCommentSubmit} 
+                  disabled={commentMutation.isPending} 
+                  placeholder={commentMutation.isPending ? "Sending comment..." : "Add a comment to start the conversation"} 
                   className="w-full bg-transparent outline-none text-[15px] text-[#111] pr-[84px] placeholder:text-[#767676]" 
                 />
                 <div className="flex items-center gap-0.5 text-[#767676] absolute right-3 top-1/2 -translate-y-1/2 bg-white pl-2 rounded-r-[24px]">
@@ -237,4 +280,4 @@ export default function PostDetailPage() {
       </div>
     </div>
   );
-}
+}
