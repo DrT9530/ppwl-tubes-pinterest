@@ -1,10 +1,16 @@
 // modules/post/post.routes.ts — Post endpoints (Feed + CRUD)
 import { Hono } from "hono";
 import { prisma } from "../../lib/prisma";
+import {
+  deleteImageFromCloudinary,
+  uploadImageToCloudinary,
+} from "../../lib/cloudinary";
 import { authGuard, optionalAuth } from "../../middleware/auth";
 import type { ApiResponse, PostDTO, PaginatedResponse } from "shared/types";
 
-export const postRoutes = new Hono()
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+export const postRoutes = new Elysia({ prefix: "/posts" })
 
   // ─── GET /posts — Public Feed (with optional auth for isLiked) ──────
   .get(
@@ -48,7 +54,7 @@ export const postRoutes = new Hono()
         prisma.post.count(),
       ]);
 
-      const data: PostDTO[] = posts.map((post) => ({
+      const data: PostDTO[] = posts.map((post: any) => ({
         id: post.id,
         imageUrl: post.imageUrl,
         caption: post.caption,
@@ -158,14 +164,14 @@ export const postRoutes = new Hono()
           commentCount: post._count.comments,
           isLiked: user ? post.likes.length > 0 : false,
           createdAt: post.createdAt.toISOString(),
-          comments: post.comments.map((comment: any) => ({
-            id: comment.id,
-            content: comment.content,
+          comments: post.comments.map((c: any) => ({
+            id: c.id,
+            content: c.content,
             user: {
               ...comment.user,
               createdAt: comment.user.createdAt.toISOString(),
             },
-            replies: comment.replies.map((r: any) => ({
+            replies: c.replies.map((r: any) => ({
               id: r.id,
               content: r.content,
               user: {
@@ -177,7 +183,10 @@ export const postRoutes = new Hono()
             createdAt: comment.createdAt.toISOString(),
           })),
         },
-      });
+      } satisfies ApiResponse<any>;
+    },
+    {
+      params: t.Object({ id: t.String() }),
     }
   )
 
@@ -201,12 +210,52 @@ export const postRoutes = new Hono()
         }, 403);
       }
 
-      const { imageUrl, caption } = body;
+      const { image, caption } = body;
+
+      if (!image || !(image instanceof File)) {
+        set.status = 400;
+        return {
+          success: false,
+          message: "File gambar wajib diunggah",
+        };
+      }
+
+      if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
+        set.status = 400;
+        return {
+          success: false,
+          message: "File harus berupa gambar JPG, PNG, WEBP, atau GIF",
+        };
+      }
+
+      if (caption && caption.length > 500) {
+        set.status = 400;
+        return {
+          success: false,
+          message: "Caption maksimal 500 karakter",
+        };
+      }
+
+      let imageUrl: string;
+
+      try {
+        const uploaded = await uploadImageToCloudinary(image);
+        imageUrl = uploaded.imageUrl;
+      } catch (error) {
+        set.status = 500;
+        return {
+          success: false,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Gagal upload gambar ke Cloudinary",
+        };
+      }
 
       const post = await prisma.post.create({
         data: {
           imageUrl,
-          caption: caption || null,
+          caption: caption?.trim() || null,
           creatorId: user.id,
         },
         include: {
@@ -238,7 +287,13 @@ export const postRoutes = new Hono()
           isLiked: false,
           createdAt: post.createdAt.toISOString(),
         },
-      }, 201);
+      } satisfies ApiResponse<PostDTO>;
+    },
+    {
+      body: t.Object({
+        image: t.File(),
+        caption: t.Optional(t.String()),
+      }),
     }
   )
 
@@ -261,9 +316,14 @@ export const postRoutes = new Hono()
         return c.json({ success: false, message: "Tidak memiliki akses" }, 403);
       }
 
+      if (body.caption && body.caption.length > 500) {
+        set.status = 400;
+        return { success: false, message: "Caption maksimal 500 karakter" };
+      }
+
       const updated = await prisma.post.update({
         where: { id },
-        data: { caption: body.caption },
+        data: { caption: body.caption?.trim() || null },
       });
 
       return c.json({
@@ -275,7 +335,11 @@ export const postRoutes = new Hono()
           caption: updated.caption,
           createdAt: updated.createdAt.toISOString(),
         },
-      });
+      } satisfies ApiResponse<any>;
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      body: t.Object({ caption: t.Optional(t.String()) }),
     }
   )
 
@@ -295,6 +359,19 @@ export const postRoutes = new Hono()
 
       if (post.creatorId !== user.id) {
         return c.json({ success: false, message: "Tidak memiliki akses" }, 403);
+      }
+
+      try {
+        await deleteImageFromCloudinary(post.imageUrl);
+      } catch (error) {
+        set.status = 500;
+        return {
+          success: false,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Gagal menghapus gambar dari Cloudinary",
+        };
       }
 
       await prisma.post.delete({ where: { id } });
