@@ -1,4 +1,4 @@
-import api from "./api"; // [cite: 294]
+import { api } from "./api"; // [cite: 294]
 import type { ApiResponse, CommentDTO, ReplyDTO } from "shared/types"; // [cite: 316, 321]
 
 export const commentService = {

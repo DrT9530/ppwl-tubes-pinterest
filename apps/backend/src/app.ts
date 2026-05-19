@@ -5,6 +5,7 @@ import { profileRoutes } from "./modules/profile";
 import { postRoutes } from "./modules/post";
 import { likeRoutes } from "./modules/like";
 import { notificationRoutes } from "./modules/notification";
+import { commentRoutes } from "./modules/comment";
 
 export const app = new Hono()
   .use("*", cors({
@@ -19,4 +20,5 @@ export const app = new Hono()
   .route("/users", profileRoutes)
   .route("/posts", postRoutes)
   .route("/posts", likeRoutes)
-  .route("/notifications", notificationRoutes);
+  .route("/notifications", notificationRoutes)
+  .route("/", commentRoutes);

@@ -15,3 +15,15 @@ export const useCreateComment = () => {
 };
 
 // Buat juga `useCreateReply` dengan pola yang persis sama.
+export const useCreateReply = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ commentId, content }: { commentId: string; content: string }) => 
+      commentService.createReply(commentId, content),
+    onSuccess: () => {
+      // Invalidate queries untuk me-refresh semua post agar reply terlihat
+      queryClient.invalidateQueries({ queryKey: ["post"] });
+    },
+  });
+};
