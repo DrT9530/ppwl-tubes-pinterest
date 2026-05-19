@@ -1,5 +1,6 @@
-// services/api.ts — API client
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+// Untuk production: VITE_API_BASE_URL langsung ke Lambda URL (tanpa /api prefix)
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.DEV ? "/api" : "");
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string | number>;
