@@ -36,10 +36,11 @@ export const authRoutes = new Hono()
 
     const token = await sign({ userId: user.id, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, JWT_SECRET);
 
+    const isProd = process.env.NODE_ENV === "production";
     setCookie(c, "auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
@@ -71,10 +72,11 @@ export const authRoutes = new Hono()
 
     const token = await sign({ userId: user.id, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, JWT_SECRET);
 
+    const isProd = process.env.NODE_ENV === "production";
     setCookie(c, "auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
@@ -101,23 +103,119 @@ export const authRoutes = new Hono()
     const cookieToken = getCookie(c, "auth_token");
     const token = authHeader?.replace("Bearer ", "") || cookieToken;
 
-    if (!token) return c.json({ success: false, message: "Unauthorized" }, 401);
+    console.log("[/auth/me] AuthHeader:", !!authHeader, "CookieToken:", !!cookieToken);
+
+    if (!token) {
+      console.log("[/auth/me] No token found!");
+      return c.json({ success: false, message: "Unauthorized" }, 401);
+    }
 
     try {
-      const payload = await verify(token, JWT_SECRET) as { userId: string };
+      const payload = await verify(token, JWT_SECRET, "HS256") as { userId: string };
+      console.log("[/auth/me] Payload verified:", payload.userId);
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
         select: { id: true, email: true, username: true, avatarUrl: true, createdAt: true },
       });
-      if (!user) return c.json({ success: false, message: "User tidak ditemukan" }, 404);
+      if (!user) {
+         console.log("[/auth/me] User not found in DB!");
+         return c.json({ success: false, message: "User tidak ditemukan" }, 404);
+      }
       return c.json({ success: true, message: "OK", data: { ...user, createdAt: user.createdAt.toISOString() } });
-    } catch {
+    } catch (e) {
+      console.log("[/auth/me] Token verify failed:", e);
       return c.json({ success: false, message: "Token tidak valid" }, 401);
     }
   })
 
   // GET /auth/google — Redirect ke Google OAuth
   .get("/google", async (c) => {
-    const callbackUrl = `${process.env.BACKEND_URL || "http://localhost:3000"}/auth/google/callback`;
-    return c.redirect("https://accounts.google.com/...");
+    const { generateState, generateCodeVerifier } = await import("arctic");
+    const state = generateState();
+    const codeVerifier = generateCodeVerifier();
+    
+    const url = google.createAuthorizationURL(state, codeVerifier, [
+      "profile",
+      "email"
+    ]);
+
+    const isProd = process.env.NODE_ENV === "production";
+
+    setCookie(c, "oauth_state", state, {
+      path: "/",
+      secure: isProd,
+      httpOnly: true,
+      maxAge: 60 * 10, // 10 minutes
+      sameSite: isProd ? "None" : "Lax",
+    });
+
+    setCookie(c, "oauth_code_verifier", codeVerifier, {
+      path: "/",
+      secure: isProd,
+      httpOnly: true,
+      maxAge: 60 * 10,
+      sameSite: isProd ? "None" : "Lax",
+    });
+
+    return c.redirect(url.toString());
+  })
+
+  // GET /auth/google/callback
+  .get("/google/callback", async (c) => {
+    const code = c.req.query("code");
+    const state = c.req.query("state");
+    const storedState = getCookie(c, "oauth_state");
+    const storedCodeVerifier = getCookie(c, "oauth_code_verifier");
+
+    if (!code || !state || !storedState || !storedCodeVerifier || state !== storedState) {
+      return c.json({ success: false, message: "Invalid request or expired session" }, 400);
+    }
+
+    try {
+      const tokens = await google.validateAuthorizationCode(code, storedCodeVerifier);
+      
+      const googleUserResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+        headers: { Authorization: `Bearer ${tokens.accessToken()}` }
+      });
+      const googleUser = await googleUserResponse.json();
+
+      if (!googleUser.email) {
+        return c.json({ success: false, message: "No email provided from Google" }, 400);
+      }
+
+      let user = await prisma.user.findUnique({
+        where: { email: googleUser.email }
+      });
+
+      if (!user) {
+        const baseUsername = googleUser.email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+        const uniqueSuffix = Math.random().toString(36).substring(2, 6);
+        
+        user = await prisma.user.create({
+          data: {
+            email: googleUser.email,
+            username: `${baseUsername}${uniqueSuffix}`,
+            provider: "GOOGLE",
+            avatarUrl: googleUser.picture,
+          }
+        });
+      }
+
+      const token = await sign({ userId: user.id, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, JWT_SECRET);
+
+      const isProd = process.env.NODE_ENV === "production";
+      setCookie(c, "auth_token", token, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "None" : "Lax",
+        maxAge: 7 * 24 * 60 * 60,
+        path: "/",
+      });
+
+      const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
+      return c.redirect(`${frontendUrl}/?token=${token}`);
+    } catch (e) {
+      console.error("Google OAuth error:", e);
+      return c.json({ success: false, message: "Internal server error during authentication" }, 500);
+    }
   });

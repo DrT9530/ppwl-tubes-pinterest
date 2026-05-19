@@ -13,6 +13,7 @@ export const app = new Hono()
     ],
     credentials: true,
   }))
+  .get("/", (c) => c.json({ success: true, message: "Pinterest Clone API is running!" }))
   .route("/auth", authRoutes)
   .route("/users", profileRoutes)
   .route("/posts", postRoutes);

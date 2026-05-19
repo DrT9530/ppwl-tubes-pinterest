@@ -11,24 +11,13 @@ await build({
   bundle: true,
   platform: "node",
   target: "node20",
-  format: "esm",
+  format: "cjs",
   outdir: "dist",
   external: [
     // Jangan bundle, Lambda akan pakai versi yang ada di node_modules layer
     "@prisma/client",
     "prisma",
   ],
-  banner: {
-    // Workaround untuk ESM + __dirname di Lambda
-    js: `
-import { createRequire } from 'module';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-const require = createRequire(import.meta.url);
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-    `.trim(),
-  },
 });
 
 console.log("📂 Copying Prisma client to dist...");
@@ -49,14 +38,37 @@ function copyDirSync(src, dest) {
 const distNodeModules = path.join(__dirname, "dist", "node_modules");
 if (!fs.existsSync(distNodeModules)) fs.mkdirSync(distNodeModules, { recursive: true });
 
-// Copy @prisma/client
-const prismaClientSrc = path.join(__dirname, "node_modules", "@prisma", "client");
+// Locate @prisma/client using require.resolve
+const prismaClientEntry = require.resolve("@prisma/client");
+const prismaClientSrc = path.dirname(prismaClientEntry);
 const prismaClientDest = path.join(distNodeModules, "@prisma", "client");
-if (fs.existsSync(prismaClientSrc)) copyDirSync(prismaClientSrc, prismaClientDest);
 
-// Copy .prisma
-const dotPrismaSrc = path.join(__dirname, "node_modules", ".prisma");
+// Lokasi .prisma biasanya berada sejajar dengan folder @prisma
+const dotPrismaSrc = path.join(prismaClientSrc, "..", "..", ".prisma");
 const dotPrismaDest = path.join(distNodeModules, ".prisma");
-if (fs.existsSync(dotPrismaSrc)) copyDirSync(dotPrismaSrc, dotPrismaDest);
+
+if (fs.existsSync(prismaClientSrc)) {
+  copyDirSync(prismaClientSrc, prismaClientDest);
+}
+
+if (fs.existsSync(dotPrismaSrc)) {
+  copyDirSync(dotPrismaSrc, dotPrismaDest);
+  
+  // Hapus engine yang tidak diperlukan oleh AWS Lambda untuk mengurangi ukuran Zip (dari ~60MB ke ~30MB)
+  const clientDir = path.join(dotPrismaDest, "client");
+  if (fs.existsSync(clientDir)) {
+    const files = fs.readdirSync(clientDir);
+    for (const file of files) {
+      if (file.startsWith("query_engine-") || file.startsWith("libquery_engine-")) {
+        // Simpan versi RHEL untuk AWS Lambda, hapus sisanya (seperti versi Windows native)
+        if (!file.includes("rhel-openssl-3.0.x")) {
+          fs.unlinkSync(path.join(clientDir, file));
+        }
+      }
+    }
+  }
+} else {
+  console.warn("⚠️ folder .prisma tidak ditemukan di:", dotPrismaSrc);
+}
 
 console.log("✅ Build selesai! Output: dist/lambda.js dan Prisma berhasil disalin.");

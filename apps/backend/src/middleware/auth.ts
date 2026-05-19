@@ -20,7 +20,7 @@ export const authGuard = createMiddleware(async (c, next) => {
   }
 
   try {
-    const payload = await verify(token, JWT_SECRET) as { userId: string };
+    const payload = await verify(token, JWT_SECRET, "HS256") as { userId: string };
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {
@@ -60,7 +60,7 @@ export const optionalAuth = createMiddleware(async (c, next) => {
   }
 
   try {
-    const payload = await verify(token, JWT_SECRET) as { userId: string };
+    const payload = await verify(token, JWT_SECRET, "HS256") as { userId: string };
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {
