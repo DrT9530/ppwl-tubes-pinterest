@@ -1,19 +1,18 @@
 // modules/profile/profile.routes.ts — User profile endpoints
-import { Hono } from "hono";
+import { Elysia, t } from "elysia";
 import { hash, compare } from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import { authGuard, optionalAuth } from "../../middleware/auth";
 import { updateProfileSchema, changePasswordSchema } from "shared/validators";
 import type { ApiResponse, UserDTO } from "shared/types";
 
-export const profileRoutes = new Hono()
+export const profileRoutes = new Elysia({ prefix: "/users" })
 
   // ─── GET /users/:id — Public Profile ────────────────────────────────
+  .use(optionalAuth)
   .get(
     "/:id",
-    optionalAuth,
-    async (c) => {
-      const id = c.req.param("id");
+    async ({ params: { id }, set }) => {
       const user = await prisma.user.findUnique({
         where: { id },
         select: {
@@ -31,13 +30,14 @@ export const profileRoutes = new Hono()
       });
 
       if (!user) {
-        return c.json({
+        set.status = 404;
+        return {
           success: false,
           message: "User tidak ditemukan",
-        }, 404);
+        };
       }
 
-      return c.json({
+      return {
         success: true,
         message: "Profil berhasil diambil",
         data: {
@@ -48,27 +48,28 @@ export const profileRoutes = new Hono()
           createdAt: user.createdAt.toISOString(),
           postCount: user._count.posts,
         },
-      });
+      };
+    },
+    {
+      params: t.Object({ id: t.String() }),
     }
   )
 
   // ─── Protected routes below ─────────────────────────────────────────
+  .use(authGuard)
 
   // ─── PATCH /users/me — Update Profile ───────────────────────────────
   .patch(
     "/me",
-    authGuard,
-    async (c) => {
-      const user = c.get("user") as any;
-      const body = await c.req.json();
+    async ({ body, user, set }) => {
       const parsed = updateProfileSchema.safeParse(body);
-      
       if (!parsed.success) {
-        return c.json({
+        set.status = 400;
+        return {
           success: false,
           message: "Validasi gagal",
           error: parsed.error.errors.map((e) => e.message).join(", "),
-        }, 400);
+        };
       }
 
       const { username, email } = parsed.data;
@@ -77,14 +78,16 @@ export const profileRoutes = new Hono()
       if (username && username !== user.username) {
         const existing = await prisma.user.findUnique({ where: { username } });
         if (existing) {
-          return c.json({ success: false, message: "Username sudah digunakan" }, 409);
+          set.status = 409;
+          return { success: false, message: "Username sudah digunakan" };
         }
       }
 
       if (email && email !== user.email) {
         const existing = await prisma.user.findUnique({ where: { email } });
         if (existing) {
-          return c.json({ success: false, message: "Email sudah terdaftar" }, 409);
+          set.status = 409;
+          return { success: false, message: "Email sudah terdaftar" };
         }
       }
 
@@ -103,28 +106,34 @@ export const profileRoutes = new Hono()
         },
       });
 
-      return c.json({
+      return {
         success: true,
         message: "Profil berhasil diperbarui",
         data: {
           ...updatedUser,
           createdAt: updatedUser.createdAt.toISOString(),
         },
-      });
+      } satisfies ApiResponse<UserDTO>;
+    },
+    {
+      body: t.Object({
+        username: t.Optional(t.String()),
+        email: t.Optional(t.String()),
+      }),
     }
   )
 
   // ─── PATCH /users/me/avatar — Update Avatar ────────────────────────
   .patch(
     "/me/avatar",
-    authGuard,
-    async (c) => {
-      const user = c.get("user") as any;
-      const body = await c.req.json();
+    async ({ body, user, set }) => {
+      // For now, accept avatarUrl directly
+      // Later: integrate Cloudinary upload
       const { avatarUrl } = body;
 
       if (!avatarUrl) {
-        return c.json({ success: false, message: "Avatar URL wajib diisi" }, 400);
+        set.status = 400;
+        return { success: false, message: "Avatar URL wajib diisi" };
       }
 
       const updatedUser = await prisma.user.update({
@@ -139,32 +148,34 @@ export const profileRoutes = new Hono()
         },
       });
 
-      return c.json({
+      return {
         success: true,
         message: "Avatar berhasil diperbarui",
         data: {
           ...updatedUser,
           createdAt: updatedUser.createdAt.toISOString(),
         },
-      });
+      } satisfies ApiResponse<UserDTO>;
+    },
+    {
+      body: t.Object({
+        avatarUrl: t.String(),
+      }),
     }
   )
 
   // ─── PATCH /users/me/password — Change Password ────────────────────
   .patch(
     "/me/password",
-    authGuard,
-    async (c) => {
-      const user = c.get("user") as any;
-      const body = await c.req.json();
+    async ({ body, user, set }) => {
       const parsed = changePasswordSchema.safeParse(body);
-      
       if (!parsed.success) {
-        return c.json({
+        set.status = 400;
+        return {
           success: false,
           message: "Validasi gagal",
           error: parsed.error.errors.map((e) => e.message).join(", "),
-        }, 400);
+        };
       }
 
       const { currentPassword, newPassword } = parsed.data;
@@ -176,19 +187,21 @@ export const profileRoutes = new Hono()
       });
 
       if (!dbUser?.passwordHash) {
-        return c.json({
+        set.status = 400;
+        return {
           success: false,
           message: "Akun OAuth tidak bisa mengubah password",
-        }, 400);
+        };
       }
 
       // Verify current password
       const isValid = await compare(currentPassword, dbUser.passwordHash);
       if (!isValid) {
-        return c.json({
+        set.status = 401;
+        return {
           success: false,
           message: "Password lama salah",
-        }, 401);
+        };
       }
 
       // Hash new password
@@ -198,9 +211,15 @@ export const profileRoutes = new Hono()
         data: { passwordHash: newHash },
       });
 
-      return c.json({
+      return {
         success: true,
         message: "Password berhasil diubah",
-      });
+      } satisfies ApiResponse;
+    },
+    {
+      body: t.Object({
+        currentPassword: t.String(),
+        newPassword: t.String(),
+      }),
     }
   );
