@@ -1,5 +1,5 @@
 // modules/post/post.routes.ts — Post endpoints (Feed + CRUD)
-import { Hono } from "hono";
+import { Elysia, t } from "elysia";
 import { prisma } from "../../lib/prisma";
 import {
   deleteImageFromCloudinary,
@@ -13,14 +13,13 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif
 export const postRoutes = new Elysia({ prefix: "/posts" })
 
   // ─── GET /posts — Public Feed (with optional auth for isLiked) ──────
+  .use(optionalAuth)
   .get(
     "/",
-    optionalAuth,
-    async (c) => {
-      const page = Number(c.req.query("page")) || 1;
-      const limit = Number(c.req.query("limit")) || 20;
+    async ({ request, query, user }) => {
+      const page = Number(query.page) || 1;
+      const limit = Number(query.limit) || 20;
       const skip = (page - 1) * limit;
-      const user = c.get("user") as any;
 
       const [posts, total] = await Promise.all([
         prisma.post.findMany({
@@ -68,7 +67,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         createdAt: post.createdAt.toISOString(),
       }));
 
-      return c.json({
+      return {
         success: true,
         message: "Feed berhasil diambil",
         data,
@@ -78,18 +77,14 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
           total,
           hasNext: skip + limit < total,
         },
-      });
+      };
     }
   )
 
   // ─── GET /posts/:id — Post Detail ──────────────────────────────────
   .get(
     "/:id",
-    optionalAuth,
-    async (c) => {
-      const id = c.req.param("id");
-      const user = c.get("user") as any;
-
+    async ({ params: { id }, user, set }) => {
       const post = await prisma.post.findUnique({
         where: { id },
         include: {
@@ -146,10 +141,11 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
       });
 
       if (!post) {
-        return c.json({ success: false, message: "Post tidak ditemukan" }, 404);
+        set.status = 404;
+        return { success: false, message: "Post tidak ditemukan" };
       }
 
-      return c.json({
+      return {
         success: true,
         message: "Detail post berhasil diambil",
         data: {
@@ -164,14 +160,14 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
           commentCount: post._count.comments,
           isLiked: user ? post.likes.length > 0 : false,
           createdAt: post.createdAt.toISOString(),
-          comments: post.comments.map((c: any) => ({
-            id: c.id,
-            content: c.content,
+          comments: post.comments.map((comment: any) => ({
+            id: comment.id,
+            content: comment.content,
             user: {
               ...comment.user,
               createdAt: comment.user.createdAt.toISOString(),
             },
-            replies: c.replies.map((r: any) => ({
+            replies: comment.replies.map((r: any) => ({
               id: r.id,
               content: r.content,
               user: {
@@ -183,34 +179,29 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
             createdAt: comment.createdAt.toISOString(),
           })),
         },
-      } satisfies ApiResponse<any>;
-    },
-    {
-      params: t.Object({ id: t.String() }),
+      };
     }
   )
 
   // ─── POST /posts — Create Post ─────────────────────────────────────
+  .use(authGuard)
   .post(
     "/",
-    authGuard,
-    async (c) => {
-      const user = c.get("user") as any;
-      const body = await c.req.json();
-      
+    async ({ user, body, set }) => {
       // Enforce max 2 posts per user
       const postCount = await prisma.post.count({
         where: { creatorId: user.id },
       });
 
       if (postCount >= 2) {
-        return c.json({
+        set.status = 403;
+        return {
           success: false,
           message: "Maksimal 2 postingan per user",
-        }, 403);
+        };
       }
 
-      const { image, caption } = body;
+      const { image, caption } = body as any;
 
       if (!image || !(image instanceof File)) {
         set.status = 400;
@@ -271,7 +262,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         },
       });
 
-      return c.json({
+      return {
         success: true,
         message: "Post berhasil dibuat",
         data: {
@@ -287,46 +278,39 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
           isLiked: false,
           createdAt: post.createdAt.toISOString(),
         },
-      } satisfies ApiResponse<PostDTO>;
-    },
-    {
-      body: t.Object({
-        image: t.File(),
-        caption: t.Optional(t.String()),
-      }),
+      };
     }
   )
 
   // ─── PATCH /posts/:id — Edit Caption ───────────────────────────────
   .patch(
     "/:id",
-    authGuard,
-    async (c) => {
-      const id = c.req.param("id");
-      const user = c.get("user") as any;
-      const body = await c.req.json();
-      
+    async ({ params: { id }, user, body, set }) => {
       const post = await prisma.post.findUnique({ where: { id } });
 
       if (!post) {
-        return c.json({ success: false, message: "Post tidak ditemukan" }, 404);
+        set.status = 404;
+        return { success: false, message: "Post tidak ditemukan" };
       }
 
       if (post.creatorId !== user.id) {
-        return c.json({ success: false, message: "Tidak memiliki akses" }, 403);
+        set.status = 403;
+        return { success: false, message: "Tidak memiliki akses" };
       }
 
-      if (body.caption && body.caption.length > 500) {
+      const { caption } = body as any;
+
+      if (caption && caption.length > 500) {
         set.status = 400;
         return { success: false, message: "Caption maksimal 500 karakter" };
       }
 
       const updated = await prisma.post.update({
         where: { id },
-        data: { caption: body.caption?.trim() || null },
+        data: { caption: caption?.trim() || null },
       });
 
-      return c.json({
+      return {
         success: true,
         message: "Post berhasil diperbarui",
         data: {
@@ -335,30 +319,24 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
           caption: updated.caption,
           createdAt: updated.createdAt.toISOString(),
         },
-      } satisfies ApiResponse<any>;
-    },
-    {
-      params: t.Object({ id: t.String() }),
-      body: t.Object({ caption: t.Optional(t.String()) }),
+      };
     }
   )
 
   // ─── DELETE /posts/:id — Delete Post ───────────────────────────────
   .delete(
     "/:id",
-    authGuard,
-    async (c) => {
-      const id = c.req.param("id");
-      const user = c.get("user") as any;
-      
+    async ({ params: { id }, user, set }) => {
       const post = await prisma.post.findUnique({ where: { id } });
 
       if (!post) {
-        return c.json({ success: false, message: "Post tidak ditemukan" }, 404);
+        set.status = 404;
+        return { success: false, message: "Post tidak ditemukan" };
       }
 
       if (post.creatorId !== user.id) {
-        return c.json({ success: false, message: "Tidak memiliki akses" }, 403);
+        set.status = 403;
+        return { success: false, message: "Tidak memiliki akses" };
       }
 
       try {
@@ -376,9 +354,9 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
 
       await prisma.post.delete({ where: { id } });
 
-      return c.json({
+      return {
         success: true,
         message: "Post berhasil dihapus",
-      });
+      };
     }
   );

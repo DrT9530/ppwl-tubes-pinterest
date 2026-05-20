@@ -210,16 +210,18 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     oauth_state.set({
       value: state,
       path: "/",
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       httpOnly: true,
+      sameSite: "none",
       maxAge: 60 * 10 // 10 minutes
     });
 
     oauth_code_verifier.set({
       value: codeVerifier,
       path: "/",
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       httpOnly: true,
+      sameSite: "none",
       maxAge: 60 * 10
     });
 
@@ -228,10 +230,10 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
 
   // ─── GET /auth/google/callback ─────────────────────────────────────
   .get("/google/callback", async ({ query, cookie: { oauth_state, oauth_code_verifier, auth_token }, jwt, set, redirect }) => {
-    const code = query.code;
-    const state = query.state;
-    const storedState = oauth_state?.value;
-    const storedCodeVerifier = oauth_code_verifier?.value;
+    const code = query.code as string;
+    const state = query.state as string;
+    const storedState = oauth_state?.value as string;
+    const storedCodeVerifier = oauth_code_verifier?.value as string;
 
     if (!code || !state || !storedState || !storedCodeVerifier || state !== storedState) {
       set.status = 400;

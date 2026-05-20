@@ -1,13 +1,12 @@
-import { Hono } from "hono";
+import { Elysia } from "elysia";
 import { prisma } from "../../lib/prisma";
 import { authGuard } from "../../middleware/auth";
 
-export const notificationRoutes = new Hono()
-  .use("*", authGuard)
+export const notificationRoutes = new Elysia({ prefix: "/notifications" })
+  .use(authGuard)
 
   // GET / — fetch semua notifikasi user yang login
-  .get("/", async (c) => {
-    const user = c.get("user") as any;
+  .get("/", async ({ user }) => {
     const notifications = await prisma.notification.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
@@ -48,38 +47,35 @@ export const notificationRoutes = new Hono()
       })
     );
 
-    return c.json({
+    return {
       success: true,
       message: "Notifikasi berhasil diambil",
       data: enriched,
-    });
+    };
   })
 
   // PATCH /read — mark semua notifikasi sebagai sudah dibaca
-  .patch("/read", async (c) => {
-    const user = c.get("user") as any;
+  .patch("/read", async ({ user }) => {
     await prisma.notification.updateMany({
       where: { userId: user.id, read: false },
       data: { read: true },
     });
 
-    return c.json({
+    return {
       success: true,
       message: "Semua notifikasi ditandai sudah dibaca",
-    });
+    };
   })
 
   // PATCH /:id/read — mark satu notifikasi sebagai sudah dibaca
-  .patch("/:id/read", async (c) => {
-    const user = c.get("user") as any;
-    const id = c.req.param("id");
-
+  .patch("/:id/read", async ({ params: { id }, user, set }) => {
     const notif = await prisma.notification.findFirst({
       where: { id, userId: user.id },
     });
 
     if (!notif) {
-      return c.json({ success: false, message: "Notifikasi tidak ditemukan" }, 404);
+      set.status = 404;
+      return { success: false, message: "Notifikasi tidak ditemukan" };
     }
 
     await prisma.notification.update({
@@ -87,19 +83,18 @@ export const notificationRoutes = new Hono()
       data: { read: true },
     });
 
-    return c.json({ success: true, message: "Notifikasi ditandai sudah dibaca" });
+    return { success: true, message: "Notifikasi ditandai sudah dibaca" };
   })
 
   // GET /unread-count — jumlah notifikasi belum dibaca
-  .get("/unread-count", async (c) => {
-    const user = c.get("user") as any;
+  .get("/unread-count", async ({ user }) => {
     const count = await prisma.notification.count({
       where: { userId: user.id, read: false },
     });
 
-    return c.json({
+    return {
       success: true,
       message: "Unread count berhasil diambil",
       data: { count },
-    });
+    };
   });

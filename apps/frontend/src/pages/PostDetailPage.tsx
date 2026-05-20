@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Heart, MessageCircle, ArrowLeft, Upload, MoreHorizontal, Smile, Image as ImageIcon, Search, Pencil, Trash2, Check, X } from "lucide-react";
+import { MessageCircle, ArrowLeft, Upload, MoreHorizontal, Search, Pencil, Trash2, Check, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { postService } from "../services/post.service";
 import { useAuthStore } from "../stores/auth.store";
+import { LikeButton } from "../components/LikeButton";
+import { CommentSection } from "../components/CommentSection";
 
 export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -12,7 +14,6 @@ export default function PostDetailPage() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   
-  const [commentText, setCommentText] = useState("");
   const [isEditingCaption, setIsEditingCaption] = useState(false);
   const [captionDraft, setCaptionDraft] = useState("");
   // Local state for optimistic UI 
@@ -38,11 +39,6 @@ export default function PostDetailPage() {
       setCaptionDraft(data.data.caption || "");
     }
   }, [data]);
-
-  const handleLike = () => {
-    setLocalIsLiked(!localIsLiked);
-    setLocalLikeCount(prev => localIsLiked ? prev - 1 : prev + 1);
-  };
 
   const updateCaption = useMutation({
     mutationFn: () => postService.update(id as string, { caption: captionDraft }),
@@ -108,13 +104,11 @@ export default function PostDetailPage() {
           {/* Action Bar (Sticky) */}
           <div className="flex items-center justify-between pb-3 sticky top-[76px] bg-white z-10 pt-2">
             <div className="flex items-center gap-1 sm:gap-2">
-              <button 
-                onClick={handleLike}
-                className="flex items-center gap-1.5 hover:bg-gray-100 px-3 py-3 rounded-full transition-colors font-semibold text-[15px] text-[#111]"
-              >
-                <Heart size={20} strokeWidth={2.5} className={localIsLiked ? "fill-[#e60023] text-[#e60023]" : ""} />
-                {localLikeCount > 0 && <span>{localLikeCount}</span>}
-              </button>
+              <LikeButton 
+                postId={post.id} 
+                initialLiked={localIsLiked} 
+                initialCount={localLikeCount} 
+              />
               <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
                 <MessageCircle size={20} strokeWidth={2.5} />
               </button>
@@ -246,52 +240,11 @@ export default function PostDetailPage() {
               {post.commentCount > 0 ? `${post.commentCount} Comments` : "No comments yet"}
             </h2>
             
-            {post.comments && post.comments.length > 0 ? (
-              <div className="space-y-6 mb-8">
-                 {post.comments.map((c: any) => (
-                   <div key={c.id} className="flex gap-3 text-sm">
-                     <Link to={`/profile/${c.user.id}`} className="shrink-0">
-                       <img src={c.user?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${c.user?.username}`} className="w-[36px] h-[36px] rounded-full object-cover border border-gray-100" />
-                     </Link>
-                     <div>
-                       <span className="font-bold text-[#111] mr-2 hover:underline cursor-pointer">{c.user?.username}</span>
-                       <span className="text-[#111] leading-relaxed">{c.content}</span>
-                       <div className="text-xs text-[#767676] mt-2 flex items-center gap-4">
-                         <span>{new Date(c.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}</span>
-                         <button className="font-semibold hover:text-[#111]">Reply</button>
-                         <button className="hover:text-red-500 cursor-pointer transition-colors p-1 -ml-1"><Heart size={14} /></button>
-                       </div>
-                     </div>
-                   </div>
-                 ))}
-              </div>
-            ) : null}
-
-            {/* Comment Input */}
-            <div className="flex items-start gap-3 mt-4 relative">
-              <div className="w-[48px] h-[48px] rounded-full overflow-hidden shrink-0 bg-gray-100 border border-gray-200">
-                {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="You" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center font-bold text-[#111]">
-                    {user?.username?.[0]?.toUpperCase() || "U"}
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 relative border border-[#cdcdcd] rounded-[24px] flex items-center px-4 py-3 focus-within:border-[#111] transition-colors shadow-sm">
-                <input 
-                  type="text" 
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Add a comment to start the conversation" 
-                  className="w-full bg-transparent outline-none text-[15px] text-[#111] pr-[84px] placeholder:text-[#767676]" 
-                />
-                <div className="flex items-center gap-0.5 text-[#767676] absolute right-3 top-1/2 -translate-y-1/2 bg-white pl-2 rounded-r-[24px]">
-                  <button className="hover:bg-gray-100 p-2 rounded-full transition-colors text-[#111]" title="Emoji"><Smile size={22} strokeWidth={2} /></button>
-                  <button className="hover:bg-gray-100 p-2 rounded-full transition-colors text-[#111]" title="Image"><ImageIcon size={22} strokeWidth={2} /></button>
-                </div>
-              </div>
-            </div>
+            <CommentSection 
+              postId={post.id} 
+              comments={post.comments || []} 
+              onOpenAuthModal={() => {}} 
+            />
           </div>
         </div>
 
@@ -317,9 +270,12 @@ export default function PostDetailPage() {
                     {/* Hover Overlay like main page */}
                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-between pointer-events-none">
                        <div className="flex justify-end gap-2 self-end mt-auto">
-                          <button className="bg-black/50 backdrop-blur-md px-3 py-2 rounded-full text-white text-xs font-semibold flex items-center gap-1">
-                            <Heart size={14} fill="currentColor" /> {relatedPost.likeCount || 0}
-                          </button>
+                          <LikeButton 
+                            postId={relatedPost.id} 
+                            initialLiked={relatedPost.isLiked} 
+                            initialCount={relatedPost.likeCount || 0} 
+                            compact={true} 
+                          />
                        </div>
                     </div>
                  </Link>
