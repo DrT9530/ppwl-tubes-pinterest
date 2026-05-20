@@ -6,7 +6,7 @@ Globals:
   Function:
     Timeout: 30
     MemorySize: 512
-    Runtime: nodejs20.x
+    Runtime: provided.al2023
     Architectures:
       - x86_64
     Environment:
@@ -44,8 +44,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: pinterest-clone-backend
-      Handler: lambda.handler
+      Handler: lambda.default.fetch
       CodeUri: dist/
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:717922813696:layer:bun:2"
       Description: Pinterest Clone API
       Events:
         ApiRoot:

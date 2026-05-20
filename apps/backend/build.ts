@@ -11,10 +11,10 @@ await build({
   bundle: true,
   platform: "node",
   target: "node20",
-  format: "cjs",
-  outdir: "dist",
+  format: "esm",
+  banner: { js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" },
+  outfile: "dist/lambda.mjs",
   external: [
-    // Jangan bundle, Lambda akan pakai versi yang ada di node_modules layer
     "@prisma/client",
     "prisma",
   ],

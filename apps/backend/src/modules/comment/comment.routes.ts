@@ -1,35 +1,33 @@
-import { Hono } from "hono";
+import { Elysia } from "elysia";
 import { prisma } from "../../lib/prisma";
 import { authGuard } from "../../middleware/auth";
 
-export const commentRoutes = new Hono()
-  .use("*", authGuard)
+export const commentRoutes = new Elysia()
+  .use(authGuard)
   
   // 1. POST /posts/:id/comments - Tambah Komentar
-  .post("/posts/:id/comments", async (c) => {
-    const user = c.get("user") as any;
-    const id = c.req.param("id");
-    const body = await c.req.json();
-
+  .post("/posts/:id/comments", async ({ params: { id }, user, body, set }) => {
     // Validasi: max 5 komentar per user (total semua post)
     const totalComments = await prisma.comment.count({
       where: { userId: user.id }
     });
 
     if (totalComments >= 5) {
-      return c.json({ success: false, message: "Maksimal 5 komentar per user tercapai." }, 400);
+      set.status = 400;
+      return { success: false, message: "Maksimal 5 komentar per user tercapai." };
     }
 
     // Ambil post untuk mendapatkan post owner ID
     const post = await prisma.post.findUnique({ where: { id } });
     if (!post) {
-      return c.json({ success: false, message: "Post tidak ditemukan." }, 404);
+      set.status = 404;
+      return { success: false, message: "Post tidak ditemukan." };
     }
 
     // Buat komentar
     const newComment = await prisma.comment.create({
       data: {
-        content: body.content,
+        content: (body as any).content,
         postId: id,
         userId: user.id,
       }
@@ -48,25 +46,22 @@ export const commentRoutes = new Hono()
       });
     }
 
-    return c.json({ success: true, message: "Komentar berhasil ditambahkan", data: newComment });
+    return { success: true, message: "Komentar berhasil ditambahkan", data: newComment };
   })
 
   // 2. POST /comments/:id/reply - Balas Komentar
-  .post("/comments/:id/reply", async (c) => {
-    const user = c.get("user") as any;
-    const id = c.req.param("id");
-    const body = await c.req.json();
-
+  .post("/comments/:id/reply", async ({ params: { id }, user, body, set }) => {
     // Cek apakah comment target ada
     const targetComment = await prisma.comment.findUnique({ where: { id } });
     if (!targetComment) {
-      return c.json({ success: false, message: "Komentar tidak ditemukan." }, 404);
+      set.status = 404;
+      return { success: false, message: "Komentar tidak ditemukan." };
     }
 
     // Reply 1 level: Schema Prisma menghubungkan Reply langsung ke Comment
     const newReply = await prisma.reply.create({
       data: {
-        content: body.content,
+        content: (body as any).content,
         commentId: id,
         userId: user.id
       }
@@ -84,5 +79,5 @@ export const commentRoutes = new Hono()
       });
     }
 
-    return c.json({ success: true, message: "Balasan berhasil ditambahkan", data: newReply });
+    return { success: true, message: "Balasan berhasil ditambahkan", data: newReply };
   });

@@ -9,4 +9,4 @@ export default {
   fetch: app.fetch,
 };
 
-console.log(`🦊 Hono is running at http://localhost:${PORT}`);
+console.log(`🦊 Elysia is running at http://localhost:${PORT}`);

@@ -1,19 +1,17 @@
-import { Hono } from "hono";
+import { Elysia } from "elysia";
 import { prisma } from "../../lib/prisma";
 import { authGuard } from "../../middleware/auth";
 
-export const likeRoutes = new Hono()
-  .use("*", authGuard)
-  .post("/:id/like", async (c) => {
-    const user = c.get("user") as any;
-    const id = c.req.param("id");
-
+export const likeRoutes = new Elysia({ prefix: "/posts" })
+  .use(authGuard)
+  .post("/:id/like", async ({ params: { id }, user, set }) => {
     const post = await prisma.post.findUnique({
       where: { id },
     });
 
     if (!post) {
-      return c.json({ success: false, message: "Post tidak ditemukan" }, 404);
+      set.status = 404;
+      return { success: false, message: "Post tidak ditemukan" };
     }
 
     const existingLike = await prisma.like.findUnique({
@@ -30,11 +28,11 @@ export const likeRoutes = new Hono()
         where: { postId: id },
       });
 
-      return c.json({
+      return {
         success: true,
         message: "Unlike berhasil",
         data: { liked: false, likeCount },
-      });
+      };
     } else {
       // Like
       await prisma.like.create({
@@ -57,10 +55,10 @@ export const likeRoutes = new Hono()
         where: { postId: id },
       });
 
-      return c.json({
+      return {
         success: true,
         message: "Like berhasil",
         data: { liked: true, likeCount },
-      });
+      };
     }
   });
