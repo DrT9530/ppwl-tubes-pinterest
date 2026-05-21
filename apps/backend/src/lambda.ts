@@ -12,6 +12,12 @@ function buildRequest(event: any): Request {
     }
   }
 
+  // AWS Lambda Payload Format 2.0 / Function URL places cookies in event.cookies array.
+  // We need to map them back to the 'cookie' header so Elysia's cookie plugin can parse them.
+  if (event.cookies && event.cookies.length > 0) {
+    headers.set("cookie", event.cookies.join("; "));
+  }
+
   const host = headers.get("host") || "localhost";
   const proto = headers.get("x-forwarded-proto") || "https";
   const rawPath = event.rawPath || event.requestContext?.http?.path || event.path || "/";
@@ -41,8 +47,16 @@ function buildRequest(event: any): Request {
 async function buildResponse(response: Response) {
   const headers: Record<string, string> = {};
   response.headers.forEach((value, key) => {
-    headers[key] = value;
+    // Skip set-cookie header as it will be returned separately in the top-level 'cookies' array
+    if (key.toLowerCase() !== "set-cookie") {
+      headers[key] = value;
+    }
   });
+
+  // Extract all Set-Cookie header values cleanly. Bun/Node supports getSetCookie().
+  const cookies = typeof response.headers.getSetCookie === "function" 
+    ? response.headers.getSetCookie() 
+    : [];
 
   const contentType = headers["content-type"] || "";
   const isBinary =
@@ -64,6 +78,7 @@ async function buildResponse(response: Response) {
   return {
     statusCode: response.status,
     headers,
+    cookies: cookies.length > 0 ? cookies : undefined,
     body,
     isBase64Encoded,
   };

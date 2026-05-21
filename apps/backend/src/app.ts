@@ -10,9 +10,11 @@ import { notificationRoutes } from "./modules/notification";
 
 export const app = new Elysia()
   .use(cors())
+  .get("/", () => ({ status: "ok", message: "Pinterest API is running" }))
   .use(authRoutes)
   .use(profileRoutes)
   .use(postRoutes)
   .use(likeRoutes)
   .use(commentRoutes)
   .use(notificationRoutes);
+
