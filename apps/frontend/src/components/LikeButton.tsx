@@ -94,18 +94,19 @@ export function LikeButton({
     <button
       onClick={handleClick}
       disabled={isPending}
-      className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm transition-all duration-150 hover:bg-gray-100 active:scale-95 group"
+      className="flex items-center gap-1.5 px-3 py-2.5 rounded-full font-semibold transition-all duration-150 hover:bg-[#f1f1f1] active:bg-[#e1e1e1] active:scale-95 group text-[#111]"
       aria-label={initialLiked ? "Unlike" : "Like"}
     >
       <Heart
-        size={22}
+        size={24}
+        strokeWidth={2.4}
         className={`transition-all duration-200 group-hover:scale-110 ${
           initialLiked
             ? "fill-[#E60023] stroke-[#E60023]"
-            : "stroke-gray-700 group-hover:stroke-[#E60023]"
+            : "stroke-[#111] group-hover:stroke-[#E60023]"
         } ${isPending ? "opacity-50" : ""}`}
       />
-      <span className={initialLiked ? "text-[#E60023]" : "text-gray-700"}>
+      <span className="text-[15px] font-semibold text-[#111]">
         {initialCount}
       </span>
     </button>

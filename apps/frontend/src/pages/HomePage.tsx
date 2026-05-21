@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/auth.store";
 import { OnboardingModal } from "../components/OnboardingModal";
 import { usePostFeed } from "../hooks/usePostFeed";
-import { ExternalLink, MoreHorizontal, Heart, EyeOff, Download, Flag } from "lucide-react";
+import { MoreHorizontal, Heart, EyeOff, Download, Flag } from "lucide-react";
 import type { PostDTO } from "shared/types";
 
 
@@ -106,6 +106,7 @@ function PinCard({ post, index }: { post: PostDTO; index: number }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const navigate = useNavigate();
   const cardHeight = getVariedHeight(index);
 
   return (
@@ -118,8 +119,8 @@ function PinCard({ post, index }: { post: PostDTO; index: number }) {
         }
       }}
     >
-      {/* Image Container — wrapped in Link for detail page */}
-      <Link to={`/post/${post.id}`} className="pin-card-image-wrapper block">
+      {/* Image Container */}
+      <div className="pin-card-image-wrapper">
         {/* Skeleton */}
         {!imageLoaded && (
           <div
@@ -132,58 +133,61 @@ function PinCard({ post, index }: { post: PostDTO; index: number }) {
         )}
 
         {/* Main Image */}
-        <img
-          src={post.imageUrl}
-          alt={post.caption || "Pin"}
-          loading="lazy"
-          onLoad={() => setImageLoaded(true)}
-          style={{ height: `${cardHeight}px` }}
-          className={`w-full rounded-2xl object-cover transition-opacity duration-300 ${
-            imageLoaded ? "opacity-100" : "opacity-0 absolute inset-0"
-          }`}
-        />
+        <Link to={`/post/${post.id}`} className="block">
+          <img
+            src={post.imageUrl}
+            alt={post.caption || "Pin"}
+            loading="lazy"
+            onLoad={() => setImageLoaded(true)}
+            style={{ height: `${cardHeight}px` }}
+            className={`w-full rounded-2xl object-cover transition-opacity duration-300 ${
+              imageLoaded ? "opacity-100" : "opacity-0 absolute inset-0"
+            }`}
+          />
+        </Link>
 
         {/* Hover Overlay */}
         <div
-          className={`absolute inset-0 rounded-2xl transition-opacity duration-200 ${
+          className={`pin-image-overlay ${
             isHovered || showMoreMenu ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
-          style={{ background: "rgba(0,0,0,0.5)" }}
+          onClick={() => navigate(`/post/${post.id}`)}
         >
           {/* Save Button — top right */}
           <button
             className="pin-save-btn"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
           >
             Save
           </button>
 
-          {/* Bottom Actions — share (left) + more (right) */}
-          <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
-            {/* Share / Upload button */}
-            <button
-              className="pin-action-btn"
-              onClick={(e) => e.stopPropagation()}
-              title="Share"
-            >
-              <ExternalLink size={16} />
-            </button>
-
-            {/* More / Three dots button */}
-            <button
-              ref={moreButtonRef}
-              className="pin-action-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowMoreMenu(!showMoreMenu);
-              }}
-              title="More options"
-            >
-              <MoreHorizontal size={16} />
-            </button>
-          </div>
+          <a
+            className="pin-download-btn"
+            href={post.imageUrl}
+            download
+            onClick={(e) => e.stopPropagation()}
+            title="Download image"
+          >
+            <Download size={18} strokeWidth={2.5} />
+          </a>
         </div>
-      </Link>
+      </div>
+
+      <div className="pin-card-footer">
+        <button
+          ref={moreButtonRef}
+          className="pin-more-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowMoreMenu(!showMoreMenu);
+          }}
+          title="More options"
+        >
+          <MoreHorizontal size={20} strokeWidth={2.5} />
+        </button>
+      </div>
 
       {/* Portal-based More Menu */}
       {showMoreMenu && (
@@ -194,33 +198,6 @@ function PinCard({ post, index }: { post: PostDTO; index: number }) {
             setIsHovered(false);
           }}
         />
-      )}
-
-      {/* Caption + Creator Info */}
-      {(post.caption || post.creator) && (
-        <div className="px-1 pt-2 pb-1">
-          {post.caption && (
-            <p className="text-sm font-medium text-[#111] line-clamp-2 leading-tight">
-              {post.caption}
-            </p>
-          )}
-          <div className="flex items-center gap-2 mt-1.5">
-            {post.creator.avatarUrl ? (
-              <img
-                src={post.creator.avatarUrl}
-                alt={post.creator.username}
-                className="w-8 h-8 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-[#e9e9e9] flex items-center justify-center text-xs font-bold text-[#111]">
-                {post.creator.username.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="text-xs font-medium text-[#111] truncate">
-              {post.creator.username}
-            </span>
-          </div>
-        </div>
       )}
     </div>
   );
@@ -238,22 +215,6 @@ function SkeletonCard({ index = 0 }: { index?: number }) {
           height: `${height}px`,
         }}
       />
-      <div className="px-1 pt-2 space-y-2">
-        <div
-          className="h-3 rounded-full animate-pulse w-3/4"
-          style={{ backgroundColor: "var(--color-surface-secondary)" }}
-        />
-        <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-full animate-pulse"
-            style={{ backgroundColor: "var(--color-surface-secondary)" }}
-          />
-          <div
-            className="h-3 rounded-full animate-pulse w-16"
-            style={{ backgroundColor: "var(--color-surface-secondary)" }}
-          />
-        </div>
-      </div>
     </div>
   );
 }

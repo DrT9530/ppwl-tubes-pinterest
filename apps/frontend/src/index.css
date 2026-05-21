@@ -552,10 +552,9 @@ body {
   justify-content: center;
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-full);
   color: var(--color-text-primary);
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease, transform 0.15s ease;
   cursor: pointer;
   border: none;
   background: none;
@@ -563,21 +562,16 @@ body {
 }
 
 .sidebar-nav-item:hover {
-  background-color: var(--color-surface-secondary);
+  background-color: transparent;
+  transform: scale(1.04);
 }
 
 .sidebar-nav-item.active {
-  color: white;
+  color: var(--color-text-primary);
 }
 
-/* Filled circle behind the active icon */
 .sidebar-nav-item.active::before {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border-radius: var(--radius-full);
-  background-color: #111;
-  z-index: -1;
+  display: none;
 }
 
 /* Push main content to the right of sidebar */
@@ -599,8 +593,18 @@ body {
 .pin-card-image-wrapper {
   position: relative;
   border-radius: 16px;
-  overflow: visible;
+  overflow: hidden;
   cursor: pointer;
+  background-color: var(--color-surface-secondary);
+}
+
+.pin-image-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.44);
+  cursor: zoom-in;
+  transition: opacity 0.18s ease;
 }
 
 .pin-save-btn {
@@ -642,6 +646,57 @@ body {
 .pin-action-btn:hover {
   background-color: #fff;
   transform: scale(1.05);
+}
+
+.pin-download-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: none;
+  background-color: rgba(255, 255, 255, 0.92);
+  color: #111;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+  z-index: 2;
+}
+
+.pin-download-btn:hover {
+  background-color: #fff;
+  transform: scale(1.05);
+}
+
+.pin-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 2px 0;
+}
+
+.pin-more-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: none;
+  background-color: transparent;
+  color: #111;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.pin-more-btn:hover {
+  background-color: var(--color-surface-secondary);
+  transform: scale(1.04);
 }
 
 /* ─── Pin More Menu (Three-dots dropdown) ─────────────────────────── */

@@ -78,8 +78,9 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
       <div className="bg-white rounded-[32px] shadow-2xl w-full relative flex flex-col overflow-hidden animate-fade-in-up" 
            style={{ 
-             maxWidth: step === 5 ? "800px" : "484px",
-             minHeight: step === 5 ? "600px" : "400px",
+             maxWidth: step === 5 ? "780px" : "484px",
+             minHeight: step === 5 ? undefined : "400px",
+             height: step === 5 ? "min(620px, calc(100vh - 32px))" : undefined,
              transition: "max-width 0.3s ease"
            }}>
         
@@ -244,22 +245,22 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
 
         {/* --- STEP 5: Mood --- */}
         {step === 5 && (
-          <div className="flex flex-col h-full flex-grow overflow-hidden pt-16 px-6 pb-6">
-            <div className="text-center mb-6">
-              <h1 className="text-[32px] font-semibold text-[#111] mb-1">What are you in the mood to do?</h1>
+          <div className="flex flex-col h-full min-h-0 overflow-hidden pt-10 px-5 pb-4">
+            <div className="text-center mb-3 flex-shrink-0">
+              <h1 className="text-[26px] font-semibold text-[#111] mb-1">What are you in the mood to do?</h1>
             </div>
             
             {/* Grid Area - Scrollable */}
-            <div className="flex-grow overflow-y-auto px-2 pb-4" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            <div className="flex-grow min-h-0 overflow-y-auto px-1.5 pb-3" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
               <style>{`.overflow-y-auto::-webkit-scrollbar { display: none; }`}</style>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
                 {moods.map((mood) => {
                   const isSelected = selectedMoods.includes(mood.id);
                   return (
                     <div 
                       key={mood.id}
                       onClick={() => handleMoodToggle(mood.id)}
-                      className={`relative rounded-2xl overflow-hidden cursor-pointer transition-transform duration-200 aspect-[4/5] ${isSelected ? "scale-95" : "hover:scale-105"}`}
+                      className={`relative rounded-2xl overflow-hidden cursor-pointer transition-transform duration-200 aspect-[4/4.25] ${isSelected ? "scale-95" : "hover:scale-105"}`}
                     >
                       <img src={mood.image} alt={mood.label} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/20 flex flex-col justify-end p-3">
@@ -283,7 +284,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
             </div>
 
             {/* Bottom Sticky Action Bar */}
-            <div className="pt-4 flex justify-center bg-white z-10 border-t border-transparent shadow-[0_-10px_20px_rgba(255,255,255,0.9)]">
+            <div className="pt-3 flex-shrink-0 flex justify-center bg-white z-10 border-t border-transparent shadow-[0_-10px_20px_rgba(255,255,255,0.9)]">
               <button 
                 disabled={selectedMoods.length < 3}
                 onClick={handleFinish} 

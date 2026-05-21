@@ -1,12 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { MessageCircle, ArrowLeft, Upload, MoreHorizontal, Search, Pencil, Trash2, Check, X } from "lucide-react";
+import { MessageCircle, ArrowLeft, Upload, MoreHorizontal, Search, Check, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { postService } from "../services/post.service";
 import { useAuthStore } from "../stores/auth.store";
 import { LikeButton } from "../components/LikeButton";
 import { CommentSection } from "../components/CommentSection";
+
+const stringToColor = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = [
+    "bg-[#a6c8e0]", // Soft sky blue
+    "bg-[#b3d4c3]", // Soft green
+    "bg-[#f0c2a2]", // Soft peach
+    "bg-[#e0b3c3]", // Soft pink
+    "bg-[#d4b3e0]", // Soft lavender
+    "bg-[#ebd382]", // Soft yellow
+  ];
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+};
 
 export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +33,9 @@ export default function PostDetailPage() {
   
   const [isEditingCaption, setIsEditingCaption] = useState(false);
   const [captionDraft, setCaptionDraft] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [allowComments, setAllowComments] = useState(true);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   // Local state for optimistic UI 
   const [localIsLiked, setLocalIsLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
@@ -39,6 +59,23 @@ export default function PostDetailPage() {
       setCaptionDraft(data.data.caption || "");
     }
   }, [data]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDropdown]);
 
   const updateCaption = useMutation({
     mutationFn: () => postService.update(id as string, { caption: captionDraft }),
@@ -82,89 +119,211 @@ export default function PostDetailPage() {
   const relatedPosts = relatedData?.data || [];
   const isOwner = user?.id === post.creator.id;
 
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(post.imageUrl);
+      if (!response.ok) throw new Error("Download failed");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const extension = blob.type.split("/")[1] || "jpg";
+
+      link.href = url;
+      link.download = `pinterest-pin-${post.id}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      setShowDropdown(false);
+      toast.success("Gambar berhasil diunduh!");
+    } catch {
+      setShowDropdown(false);
+      toast.error("Gagal mengunduh gambar");
+    }
+  };
+
+  const handleCopyEmbed = async () => {
+    const embedCode = `<iframe src="${window.location.origin}/embed/${post.id}" width="345" height="600" frameborder="0" scrolling="no" style="border:none; border-radius:8px;"></iframe>`;
+
+    try {
+      await navigator.clipboard.writeText(embedCode);
+      toast.success("Kode sisipan berhasil disalin ke clipboard!");
+    } catch {
+      toast.error("Gagal menyalin kode sisipan");
+    } finally {
+      setShowDropdown(false);
+    }
+  };
+
+  const handleDeletePin = () => {
+    setShowDropdown(false);
+    if (window.confirm("Hapus Pin ini?")) {
+      deletePost.mutate();
+    }
+  };
+
+  const creatorInitials = post.creator.username ? post.creator.username.charAt(0).toUpperCase() : "U";
+  const avatarBgColor = stringToColor(post.creator.username || "");
+
   return (
     <div className="flex justify-center w-full max-w-[1800px] mx-auto relative px-4 sm:px-6 lg:px-8 pt-8 pb-24">
       
-      {/* Sticky Back Button */}
-      <div className="hidden lg:flex sticky top-24 self-start mr-6 xl:mr-10 shrink-0 z-20">
+      {/* Sticky Back Button (Simple arrow icon without card/shadow background) */}
+      <div className="hidden lg:flex sticky top-24 self-start mr-4 shrink-0 z-20">
         <button 
           onClick={() => navigate(-1)} 
-          className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors bg-white shadow-[0_0_8px_rgba(0,0,0,0.1)]"
+          className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-[#f1f1f1] active:bg-[#e1e1e1] text-[#111] transition-all duration-200"
           title="Back"
         >
-          <ArrowLeft size={24} strokeWidth={2.5} className="text-[#111]" />
+          <ArrowLeft size={28} strokeWidth={2.4} className="text-[#111]" />
         </button>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 w-full max-w-[1400px]">
         
-        {/* LEFT COLUMN: Pin Detail (Single Column Layout) */}
-        <div className="w-full lg:w-[508px] shrink-0 flex flex-col mx-auto lg:mx-0">
+        {/* LEFT COLUMN: Pin Detail (Unified White Card Container) */}
+        <div className="w-full lg:w-[620px] shrink-0 bg-white rounded-[32px] shadow-[0_1px_24px_rgba(0,0,0,0.06)] border border-[#efefef] p-6 sm:p-8 flex flex-col mx-auto lg:mx-0 self-start">
           
-          {/* Action Bar (Sticky) */}
-          <div className="flex items-center justify-between pb-3 sticky top-[76px] bg-white z-10 pt-2">
-            <div className="flex items-center gap-1 sm:gap-2">
+          {/* Action Bar (Sticky Inside Card) */}
+          <div className="flex items-center justify-between pb-4 sticky top-[76px] bg-white z-20 pt-1">
+            <div className="flex items-center gap-3">
               <LikeButton 
                 postId={post.id} 
                 initialLiked={localIsLiked} 
                 initialCount={localLikeCount} 
               />
-              <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
-                <MessageCircle size={20} strokeWidth={2.5} />
+              <button className="w-11 h-11 flex items-center justify-center rounded-full text-[#111] hover:bg-[#f1f1f1] active:bg-[#e1e1e1] transition-all duration-200">
+                <MessageCircle size={24} strokeWidth={2.4} />
               </button>
-              <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
-                <Upload size={20} strokeWidth={2.5} />
+              <button className="w-11 h-11 flex items-center justify-center rounded-full text-[#111] hover:bg-[#f1f1f1] active:bg-[#e1e1e1] transition-all duration-200">
+                <Upload size={24} strokeWidth={2.4} />
               </button>
-              {isOwner && (
-                <>
-                  <button
-                    onClick={() => setIsEditingCaption(true)}
-                    className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]"
-                    title="Edit caption"
-                  >
-                    <Pencil size={20} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (window.confirm("Hapus post ini?")) {
-                        deletePost.mutate();
-                      }
-                    }}
-                    className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#cc0000]"
-                    title="Delete post"
-                    disabled={deletePost.isPending}
-                  >
-                    <Trash2 size={20} strokeWidth={2.5} />
-                  </button>
-                </>
-              )}
-              <button className="hover:bg-gray-100 p-3 rounded-full transition-colors text-[#111]">
-                <MoreHorizontal size={20} strokeWidth={2.5} />
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowDropdown((prev) => !prev)}
+                  className={`w-11 h-11 flex items-center justify-center rounded-full text-[#111] hover:bg-[#f1f1f1] active:bg-[#e1e1e1] transition-all duration-200 ${showDropdown ? 'bg-[#f1f1f1]' : ''}`}
+                  title="More options"
+                  aria-expanded={showDropdown}
+                >
+                  <MoreHorizontal size={24} strokeWidth={2.4} />
+                </button>
+
+                {showDropdown && (
+                  <div className="absolute left-0 top-full mt-2 w-[280px] rounded-[16px] border border-gray-100 bg-white p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] z-30 animate-fade-in-up">
+                    <div className="px-3 py-2 text-[12px] font-bold text-[#767676] uppercase tracking-wider">
+                      Opsi Pin
+                    </div>
+                    {isOwner && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditingCaption(true);
+                            setShowDropdown(false);
+                          }}
+                          className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] hover:bg-[#f1f1f1] transition-colors"
+                        >
+                          Edit Pin
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDeletePin}
+                          className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#cc0000] hover:bg-[#fff0f0] transition-colors disabled:opacity-60"
+                          disabled={deletePost.isPending}
+                        >
+                          Hapus Pin
+                        </button>
+                      </>
+                    )}
+                    
+                    {/* Toggle Switch */}
+                    <div className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] hover:bg-[#f1f1f1] cursor-pointer transition-colors"
+                         onClick={() => setAllowComments((prev) => !prev)}>
+                      <span>Izinkan komentar</span>
+                      <button
+                        type="button"
+                        className={`relative h-6 w-11 rounded-full p-1 cursor-pointer transition-all duration-300 ${
+                          allowComments ? "bg-[#0fa573]" : "bg-[#cdcdcd]"
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAllowComments((prev) => !prev);
+                        }}
+                      >
+                        <span
+                          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-300 ${
+                            allowComments ? "left-[22px]" : "left-0.5"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleDownload}
+                      className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] hover:bg-[#f1f1f1] transition-colors"
+                    >
+                      Unduh gambar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toast.success("Berhasil ditambahkan ke kolase");
+                        setShowDropdown(false);
+                      }}
+                      className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] hover:bg-[#f1f1f1] transition-colors"
+                    >
+                      Tambahkan ke kolase
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCopyEmbed}
+                      className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] hover:bg-[#f1f1f1] transition-colors"
+                    >
+                      Dapatkan kode sisipan pin
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Right Options in Action Bar */}
+            <div className="flex items-center gap-3">
+              {/* Board Selector Dropdown */}
+              <div className="relative">
+                <button className="flex items-center gap-1.5 hover:bg-[#f1f1f1] active:bg-[#e1e1e1] px-4 py-3 rounded-full font-semibold text-[15px] text-[#111] transition-all duration-200">
+                  <span>Profil</span>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" className="text-[#111] mt-0.5"><path d="M12 16.59L6.7 11.3a1 1 0 0 1 1.4-1.4l3.9 3.9 3.9-3.9a1 1 0 0 1 1.4 1.4l-5.3 5.3z"/></svg>
+                </button>
+              </div>
+
+              {/* Simpan Button */}
+              <button className="bg-[#e60023] hover:bg-[#ad081b] active:scale-95 text-white font-semibold rounded-full px-5 py-3 text-[15px] transition-all duration-200">
+                Simpan
               </button>
             </div>
-            <button className="bg-[#e60023] hover:bg-[#ad081b] text-white font-semibold rounded-full px-5 py-3.5 text-[15px] transition-colors">
-              Save
-            </button>
           </div>
 
-          {/* Main Image */}
-          <div className="w-full relative rounded-[32px] overflow-hidden mb-6 group cursor-zoom-in" style={{ boxShadow: "0 0 0 1px rgba(0,0,0,0.05)" }}>
+          {/* Main Image Container */}
+          <div className="w-full relative rounded-[24px] overflow-hidden mb-6 group cursor-zoom-in" style={{ boxShadow: "0 0 0 1px rgba(0,0,0,0.05)" }}>
             <img 
               src={post.imageUrl} 
               alt={post.caption || "Pin image"} 
-              className="w-full h-auto max-h-[85vh] object-cover"
+              className="w-full h-auto max-h-[85vh] object-cover rounded-[24px]"
             />
             {/* AI modified pill (aesthetic detail) */}
             <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white text-[13px] font-semibold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
               AI modified
             </div>
             
-            {/* Interactive Image Tools */}
-            <div className="absolute bottom-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-               <button className="w-10 h-10 bg-white/90 backdrop-blur hover:bg-white rounded-full flex items-center justify-center text-[#111] shadow-sm transition-colors" title="Expand">
+            {/* Interactive Image Tools (Always visible with premium glassmorphism) */}
+            <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
+               <button className="w-10 h-10 bg-white/85 backdrop-blur hover:bg-white active:scale-95 rounded-full flex items-center justify-center text-[#111] shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:scale-105 transition-all duration-200" title="Expand">
                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M11 5h2v14h-2zm-6 6h14v2H5z" transform="rotate(45, 12, 12)"/></svg>
                </button>
-               <button className="w-10 h-10 bg-white/90 backdrop-blur hover:bg-white rounded-full flex items-center justify-center text-[#111] shadow-sm transition-colors" title="Visual search">
+               <button className="w-10 h-10 bg-white/85 backdrop-blur hover:bg-white active:scale-95 rounded-full flex items-center justify-center text-[#111] shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:scale-105 transition-all duration-200" title="Visual search">
                  <Search size={20} strokeWidth={2.5}/>
                </button>
             </div>
@@ -221,30 +380,44 @@ export default function PostDetailPage() {
             ) : null}
             <div className="flex items-center justify-between">
               <Link to={`/profile/${post.creator.id}`} className="flex items-center gap-3 group">
-                <img 
-                  src={post.creator.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.creator.username}`} 
-                  alt={post.creator.username} 
-                  className="w-[48px] h-[48px] rounded-full object-cover border border-gray-100 group-hover:brightness-95 transition-all" 
-                />
+                {post.creator.avatarUrl ? (
+                  <img 
+                    src={post.creator.avatarUrl} 
+                    alt={post.creator.username} 
+                    className="w-12 h-12 rounded-full object-cover border border-gray-100 group-hover:brightness-95 transition-all" 
+                  />
+                ) : (
+                  <div className={`w-12 h-12 rounded-full ${avatarBgColor} text-white flex items-center justify-center font-bold text-lg shadow-sm group-hover:brightness-95 transition-all`}>
+                    {creatorInitials}
+                  </div>
+                )}
                 <span className="font-semibold text-[15px] text-[#111] group-hover:underline">{post.creator.username}</span>
               </Link>
-              <button className="bg-[#e9e9e9] hover:bg-[#e2e2e2] text-[#111] font-semibold rounded-full px-5 py-3 text-[15px] transition-colors">
-                Follow
-              </button>
+              {!isOwner && (
+                <button className="bg-[#e9e9e9] hover:bg-[#e2e2e2] active:scale-95 text-[#111] font-semibold rounded-full px-5 py-3 text-[15px] transition-colors">
+                  Follow
+                </button>
+              )}
             </div>
           </div>
 
           {/* Comments Section */}
           <div className="px-2 pb-10">
             <h2 className="font-semibold text-[20px] text-[#111] mb-6">
-              {post.commentCount > 0 ? `${post.commentCount} Comments` : "No comments yet"}
+              {post.commentCount > 0 ? `${post.commentCount} Komentar` : "Belum ada komentar"}
             </h2>
             
-            <CommentSection 
-              postId={post.id} 
-              comments={post.comments || []} 
-              onOpenAuthModal={() => {}} 
-            />
+            {allowComments ? (
+              <CommentSection 
+                postId={post.id} 
+                comments={post.comments || []} 
+                onOpenAuthModal={() => {}} 
+              />
+            ) : (
+              <div className="rounded-2xl bg-[#f7f7f7] px-4 py-5 text-center text-[14px] font-medium text-[#767676]">
+                Komentar dinonaktifkan untuk Pin ini.
+              </div>
+            )}
           </div>
         </div>
 
