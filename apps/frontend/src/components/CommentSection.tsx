@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useCreateComment, useCreateReply } from "../hooks/useComments"; 
 import { useAuthStore } from "../stores/auth.store";
-import { MessageCircle } from "lucide-react"; 
+import { MessageCircle, Smile, StickyNote, Image } from "lucide-react"; 
 import type { CommentDTO, ReplyDTO } from "shared/types"; 
 
 interface CommentSectionProps {
@@ -11,7 +11,7 @@ interface CommentSectionProps {
 }
 
 export const CommentSection = ({ postId, comments, onOpenAuthModal }: CommentSectionProps) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   
   // State untuk komentar utama
   const [newComment, setNewComment] = useState("");
@@ -28,7 +28,6 @@ export const CommentSection = ({ postId, comments, onOpenAuthModal }: CommentSec
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Jika tidak terautentikasi, hentikan proses dan buka modal login
     if (!isAuthenticated) {
       onOpenAuthModal();
       return;
@@ -42,7 +41,7 @@ export const CommentSection = ({ postId, comments, onOpenAuthModal }: CommentSec
     }
   };
 
-  // Handler Submit Balasan Komentar (Sudah diperbaiki dari typo e=:)
+  // Handler Submit Balasan Komentar
   const handleReplySubmit = (e: React.FormEvent, commentId: string) => {
     e.preventDefault();
     
@@ -65,116 +64,170 @@ export const CommentSection = ({ postId, comments, onOpenAuthModal }: CommentSec
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Form Tambah Komentar Baru */}
-      <form onSubmit={handleCommentSubmit} className="flex gap-2">
-        <input 
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          onClick={() => !isAuthenticated && onOpenAuthModal()} 
-          placeholder="Tambahkan komentar..."
-          className="border border-[#CDCDCD] rounded-full px-4 py-2 flex-1 text-[#111111] focus:outline-none focus:border-[#767676]" 
-        />
-        <button 
-          type="submit" 
-          disabled={createCommentMutation.isPending} 
-          className="bg-[#E60023] hover:bg-[#ad001a] text-white font-semibold rounded-full px-4 transition-colors disabled:opacity-50" 
-        >
-          {createCommentMutation.isPending ? "Mengirim..." : "Kirim"}
-        </button>
-      </form>
-
+    <div className="flex flex-col gap-4 w-full text-[14px]">
+      
       {/* List Komentar */}
-      <div className="flex flex-col gap-5 mt-2">
+      <div className="flex flex-col gap-3.5 mt-1 max-w-full overflow-hidden">
         {comments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-6 text-[#767676] gap-2">
-            <MessageCircle className="w-8 h-8 opacity-50" />
-            <p className="text-sm">Belum ada komentar. Awali percakapan!</p>
+            <MessageCircle className="w-7 h-7 opacity-50" />
+            <p className="text-xs">Belum ada komentar. Awali percakapan!</p>
           </div>
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="flex items-start gap-2 w-full">
-              {/* KIRI: Avatar Utama */}
-              <img 
-                src={comment.user?.avatarUrl || "/placeholder-avatar.png"} 
-                className="w-8 h-8 rounded-full object-cover mt-0.5 flex-shrink-0" 
-                alt={comment.user?.username} 
-              />
-              
-              {/* KANAN: Blok Konten Utama */}
-              <div className="flex-1 flex flex-col min-w-0">
-                {/* Baris Konten */}
-                <p className="text-sm text-[#111111] leading-relaxed break-words">
-                  <span className="font-bold mr-2 text-[#111111] hover:underline cursor-pointer">
-                    {comment.user?.username}
-                  </span>
-                  {comment.content}
-                </p>
-                
-                {/* Baris Metadata & Aksi */}
-                <div className="flex items-center gap-3 mt-1 text-xs text-[#767676]">
-                  <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
-                  <button 
-                    onClick={() => {
-                      if (!isAuthenticated) return onOpenAuthModal(); 
-                      setReplyingToId(replyingToId === comment.id ? null : comment.id);
-                    }} 
-                    className="font-semibold hover:underline"
-                  >
-                    Reply
-                  </button>
+            <div key={comment.id} className="flex flex-col w-full">
+              {/* Row Komentar Utama */}
+              <div className="flex items-start gap-2 w-full">
+                {/* Avatar Pengomentar */}
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 mt-0.5">
+                  <img 
+                    src={comment.user?.avatarUrl || "https://vignette.wikia.nocookie.net/line/images/b/b3/2015-brown.png"} 
+                    className="w-full h-full object-cover" 
+                    alt="avatar" 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://vignette.wikia.nocookie.net/line/images/b/b3/2015-brown.png";
+                    }}
+                  />
                 </div>
+                
+                {/* Isi Komentar & Metadata */}
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13.5px] text-[#111111] leading-snug break-words">
+                    <span className="font-bold mr-3 text-[#111111] hover:underline cursor-pointer">
+                      {comment.user?.username || "User"}
+                    </span>
+                    {/* 👇 TAMBAHKAN INI DI ANTARA DUA SPAN */}
+                    <span className="text-[#111111] font-normal">{comment.content}</span>
+                  </div>
+                  
+                  {/* Tombol Aksi & Balas */}
+                  <div className="flex items-center gap-4 mt-0.5 text-[11px] font-medium text-[#767676]">
+                    <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                    <button 
+                      onClick={() => {
+                        if (!isAuthenticated) return onOpenAuthModal(); 
+                        setReplyingToId(replyingToId === comment.id ? null : comment.id);
+                      }} 
+                      className="hover:underline cursor-pointer font-bold"
+                    >
+                      Reply
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-                {/* Form Input Balasan */}
-                {replyingToId === comment.id && (
-                  <form onSubmit={(e) => handleReplySubmit(e, comment.id)} className="mt-2 flex gap-2 w-full">
+              {/* Input Form Balasan */}
+              {replyingToId === comment.id && (
+                <div className="flex gap-2 pl-10 mt-1.5 w-full">
+                  <form onSubmit={(e) => handleReplySubmit(e, comment.id)} className="flex items-center flex-1 border border-[#e2e2e2] rounded-full bg-white px-3 py-1 focus-within:border-[#767676]">
                     <input
                       value={replyContent}
                       onChange={(e) => setReplyContent(e.target.value)}
-                      placeholder={`Balas @${comment.user?.username}...`}
-                      className="border border-[#CDCDCD] rounded-full px-3 py-1.5 flex-1 text-sm text-[#111111] focus:outline-none focus:border-[#767676]" 
+                      placeholder={`Balas...`}
+                      className="flex-1 text-xs text-[#111111] focus:outline-none bg-transparent py-1" 
                       autoFocus
                     />
                     <button
                       type="submit"
                       disabled={createReplyMutation.isPending}
-                      className="bg-[#111111] hover:bg-[#222222] text-white text-xs font-semibold rounded-full px-3 transition-colors disabled:opacity-50 flex-shrink-0"
                     >
-                      {createReplyMutation.isPending ? "..." : "Balas"}
+                      Balas
                     </button>
                   </form>
-                )}
+                </div>
+              )}
 
-                {/* List Balasan / Replies */}
-                {comment.replies && comment.replies.length > 0 && (
-                  <div className="mt-3 flex flex-col gap-3 border-l-2 border-[#CDCDCD] pl-3 w-full"> 
-                    {comment.replies.map((reply: ReplyDTO) => ( 
-                      <div key={reply.id} className="flex items-start gap-2 w-full">
+              {/* Sub-list Balasan (Replies) */}
+              {comment.replies && comment.replies.length > 0 && (
+                <div className="mt-2 flex flex-col gap-2 pl-10 w-full border-l border-gray-100 ml-4"> 
+                  {comment.replies.map((reply: ReplyDTO) => ( 
+                    <div key={reply.id} className="flex items-start gap-2 w-full">
+                      <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 mt-0.5">
                         <img 
-                          src={reply.user?.avatarUrl || "/placeholder-avatar.png"} 
-                          className="w-6 h-6 rounded-full object-cover mt-0.5 flex-shrink-0" 
-                          alt={reply.user?.username} 
+                          src={reply.user?.avatarUrl || "https://vignette.wikia.nocookie.net/line/images/b/b3/2015-brown.png"} 
+                          className="w-full h-full object-cover" 
+                          alt="avatar" 
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://vignette.wikia.nocookie.net/line/images/b/b3/2015-brown.png";
+                          }}
                         />
-                        <div className="flex-1 flex flex-col min-w-0">
-                          <p className="text-xs text-[#111111] leading-relaxed break-words">
-                            <span className="font-bold mr-2 text-[#111111] hover:underline cursor-pointer">
-                              {reply.user?.username}
-                            </span>
-                            {reply.content}
-                          </p>
-                          <div className="flex items-center gap-3 mt-0.5 text-[10px] text-[#767676]">
-                            <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
-                          </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] text-[#111111] leading-snug break-words">
+                          <span className="font-bold mr-3 text-[#942636] hover:underline cursor-pointer">
+                            {reply.user?.username || "User"}
+                          </span>
+                          {"\u00A0\u00A0\u00A0"}
+                          <span className="text-[#111111] font-normal">{reply.content}</span>
+                        </div>
+                        <div className="flex items-center gap-3 mt-0.5 text-[10px] text-[#767676]">
+                          <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))
         )}
       </div>
+
+      {/* Form Input Tambah Komentar Utama */}
+      <div className="flex items-center gap-2 w-full pt-3 mt-1 border-t border-gray-100">
+        {/* Avatar User Aktif */}
+        <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+          <img 
+            src={user?.avatarUrl || "https://vignette.wikia.nocookie.net/line/images/b/b3/2015-brown.png"} 
+            className="w-full h-full object-cover" 
+            alt="User avatar" 
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "https://vignette.wikia.nocookie.net/line/images/b/b3/2015-brown.png";
+            }}
+          />
+        </div>
+        
+        {/* Box Input Semenjana & Proporsional */}
+<form 
+  onSubmit={handleCommentSubmit} 
+  className="flex-1 flex items-center bg-[#f5f5f5] hover:bg-[#e9e9e9] rounded-[20px] pl-3.5 pr-3 py-2 min-h-[40px] transition-all focus-within:outline-none focus:outline-none" // <--- TAMBAHKAN DUA CLASS INI JIR
+>
+  <input 
+    value={newComment}
+    onChange={(e) => setNewComment(e.target.value)}
+    onClick={() => !isAuthenticated && onOpenAuthModal()} 
+    placeholder="Tambahkan komentar"
+    spellCheck="false"
+    className="flex-1 text-[13.5px] text-[#111111] bg-transparent outline-none focus:outline-none placeholder-[#767676] pr-2" 
+
+          />
+          
+          {/* SISI KANAN INPUT: Icon Kecil Manis */}
+          <div className="flex items-center gap-2 text-[#111111] flex-shrink-0">
+            <button type="button" className="p-0.5 hover:bg-black/5 rounded-full transition cursor-pointer">
+              <Smile size={18} className="text-[#111]" />
+            </button>
+            <button type="button" className="p-0.5 hover:bg-black/5 rounded-full transition cursor-pointer">
+              <StickyNote size={18} className="text-[#111]" />
+            </button>
+            <button type="button" className="p-0.5 hover:bg-black/5 rounded-full transition cursor-pointer">
+              <Image size={18} className="text-[#111]" />
+            </button>
+
+            {/* Tombol Kirim Text */}
+            {newComment.trim() && (
+              <button 
+                type="submit" 
+                disabled={createCommentMutation.isPending} 
+                className="text-[13px] font-bold text-[#e60023] hover:text-[#b6001a] pl-1 transition-colors disabled:opacity-50 cursor-pointer" 
+              >
+                Kirim
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
     </div>
   );
 };

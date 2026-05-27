@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Search, Bell, MessageCircle, User, LogOut } from "lucide-react";
 import { useAuthStore } from "../stores/auth.store";
 import { useState, useRef, useEffect } from "react";
+import { MessageDropdown } from "./MessageDropdown";
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -10,12 +11,26 @@ export function Navbar() {
   const location = useLocation();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showMsgDropdown, setShowMsgDropdown] = useState(false);
+  const msgDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click (DIPERBAIKI AMAN)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      // Menutup dropdown profile jika klik di luar
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
         setShowDropdown(false);
+      }
+
+      // Menutup dropdown pesan jika klik di luar, KECUALI klik pada tombolnya sendiri
+      if (msgDropdownRef.current && !msgDropdownRef.current.contains(target)) {
+        // Cek apakah klik berasal dari tombol pesan itu sendiri atau ikon di dalamnya
+        const clickedToggleButton = (target as HTMLElement).closest("#nav-messages");
+        if (!clickedToggleButton) {
+          setShowMsgDropdown(false);
+        }
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -25,6 +40,7 @@ export function Navbar() {
   const handleLogout = async () => {
     await logout();
     setShowDropdown(false);
+    setShowMsgDropdown(false);
     navigate("/login");
   };
 
@@ -71,17 +87,35 @@ export function Navbar() {
               <Bell size={24} />
             </button>
 
-            {/* Messages (placeholder) */}
-            <button className="navbar-icon-btn" id="nav-messages" title="Messages">
-              <MessageCircle size={24} />
-            </button>
+            {/* Messages Dropdown Area */}
+            <div className="relative" ref={msgDropdownRef}>
+              <button 
+                id="nav-messages" 
+                onClick={() => {
+                  setShowMsgDropdown(!showMsgDropdown);
+                  setShowDropdown(false); 
+                }}
+                className={`navbar-icon-btn flex items-center justify-center transition-colors ${showMsgDropdown ? "text-[#e60023]" : "text-gray-700"}`} 
+                title="Messages"
+              >
+                <MessageCircle size={24} />
+              </button>
+
+              {/* Tampilkan panel list chat Pinterest pas diklik */}
+              {showMsgDropdown && (
+                <MessageDropdown onClose={() => setShowMsgDropdown(false)} />
+              )}
+            </div>
 
             {/* User Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 className="navbar-icon-btn"
                 id="nav-user-menu"
-                onClick={() => setShowDropdown(!showDropdown)}
+                onClick={() => {
+                  setShowDropdown(!showDropdown);
+                  setShowMsgDropdown(false); 
+                }}
                 title="Profile"
               >
                 {user?.avatarUrl ? (
