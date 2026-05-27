@@ -1,6 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { MessageCircle, ArrowLeft, Upload, MoreHorizontal, Search, Check, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  Maximize2,
+  MoreHorizontal,
+  Search,
+  Upload,
+  X,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { postService } from "../services/post.service";
@@ -14,12 +23,12 @@ const stringToColor = (str: string) => {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
   const colors = [
-    "bg-[#a6c8e0]", // Soft sky blue
-    "bg-[#b3d4c3]", // Soft green
-    "bg-[#f0c2a2]", // Soft peach
-    "bg-[#e0b3c3]", // Soft pink
-    "bg-[#d4b3e0]", // Soft lavender
-    "bg-[#ebd382]", // Soft yellow
+    "bg-[#a6c8e0]",
+    "bg-[#b3d4c3]",
+    "bg-[#f0c2a2]",
+    "bg-[#e0b3c3]",
+    "bg-[#d4b3e0]",
+    "bg-[#ebd382]",
   ];
   const index = Math.abs(hash) % colors.length;
   return colors[index];
@@ -30,13 +39,12 @@ export default function PostDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  
+
   const [isEditingCaption, setIsEditingCaption] = useState(false);
   const [captionDraft, setCaptionDraft] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [allowComments, setAllowComments] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  // Local state for optimistic UI 
   const [localIsLiked, setLocalIsLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
 
@@ -51,7 +59,6 @@ export default function PostDetailPage() {
     queryFn: () => postService.getFeed(1, 20),
   });
 
-  // Sync local state when data loads
   useEffect(() => {
     if (data?.data) {
       setLocalIsLiked(data.data.isLiked || false);
@@ -85,7 +92,8 @@ export default function PostDetailPage() {
       setIsEditingCaption(false);
       toast.success("Caption berhasil diperbarui");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Gagal memperbarui caption"),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Gagal memperbarui caption"),
   });
 
   const deletePost = useMutation({
@@ -95,29 +103,50 @@ export default function PostDetailPage() {
       toast.success("Post berhasil dihapus");
       navigate("/", { replace: true });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Gagal menghapus post"),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus post"),
   });
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="spinner spinner-lg" style={{ borderColor: "#e9e9e9", borderTopColor: "#e60023", borderWidth: "4px", width: "48px", height: "48px" }} />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div
+          className="spinner spinner-lg"
+          style={{
+            borderColor: "#e9e9e9",
+            borderTopColor: "#e60023",
+            borderWidth: "4px",
+            width: "48px",
+            height: "48px",
+          }}
+        />
       </div>
     );
   }
 
   if (isError || !data?.data) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <h2 className="text-xl font-semibold mb-2">Pin not found</h2>
-        <button onClick={() => navigate(-1)} className="px-5 py-3 mt-4 bg-gray-100 rounded-full font-semibold hover:bg-gray-200 transition-colors">Go back to feed</button>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center">
+        <h2 className="mb-2 text-xl font-semibold">Pin not found</h2>
+        <button
+          onClick={() => navigate(-1)}
+          className="mt-4 rounded-full bg-gray-100 px-5 py-3 font-semibold transition-colors hover:bg-gray-200"
+        >
+          Go back to feed
+        </button>
       </div>
     );
   }
 
   const post = data.data;
-  const relatedPosts = relatedData?.data || [];
+  const relatedPosts = (relatedData?.data || []).filter(
+    (relatedPost: any) => relatedPost.id !== post.id
+  );
   const isOwner = user?.id === post.creator.id;
+  const creatorInitials = post.creator.username
+    ? post.creator.username.charAt(0).toUpperCase()
+    : "U";
+  const avatarBgColor = stringToColor(post.creator.username || "");
 
   const handleDownload = async () => {
     try {
@@ -163,297 +192,330 @@ export default function PostDetailPage() {
     }
   };
 
-  const creatorInitials = post.creator.username ? post.creator.username.charAt(0).toUpperCase() : "U";
-  const avatarBgColor = stringToColor(post.creator.username || "");
+  const sidebarPosts = relatedPosts.slice(0, 6);
+  const bottomPosts = relatedPosts.slice(6);
+
+  const renderRelatedPost = (relatedPost: any) => (
+    <article
+      key={relatedPost.id}
+      className="mb-5 break-inside-avoid overflow-hidden rounded-[18px]"
+    >
+      <Link
+        to={`/post/${relatedPost.id}`}
+        className="group block overflow-hidden rounded-[18px] bg-[#f5f5f5]"
+      >
+        <img
+          src={relatedPost.imageUrl}
+          alt={relatedPost.caption || "Related pin"}
+          loading="lazy"
+          className="w-full rounded-[18px] object-cover transition duration-200 group-hover:brightness-[0.88]"
+        />
+      </Link>
+      <div className="mt-2 flex items-start justify-end px-2">
+        <button
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[#111] transition-colors hover:bg-[#f1f1f1]"
+          title="More options"
+        >
+          <MoreHorizontal size={20} strokeWidth={2.5} />
+        </button>
+      </div>
+    </article>
+  );
 
   return (
-    <div className="flex justify-center w-full max-w-[1800px] mx-auto relative px-4 sm:px-6 lg:px-8 pt-8 pb-24">
-      
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 w-full max-w-[1400px]">
-        
-        {/* LEFT COLUMN: Pin Detail (Unified White Card Container) */}
-        <div className="w-full lg:w-[620px] shrink-0 bg-white rounded-[32px] shadow-[0_1px_24px_rgba(0,0,0,0.06)] border border-[#efefef] p-6 sm:p-8 flex flex-col mx-auto lg:mx-0 self-start">
-          
-          {/* Action Bar (Normal Position Atas Foto) */}
-<div className="flex items-center justify-between pb-4 bg-white pt-1">
-  <div className="flex items-center gap-3">
-              <button 
-      onClick={() => navigate(-1)} 
-      className="w-11 h-11 flex items-center justify-center rounded-full text-[#111] hover:bg-[#f1f1f1] active:bg-[#e1e1e1] transition-all duration-200"
-      title="Kembali"
-    >
-      <ArrowLeft size={24} strokeWidth={2.4} />
-    </button>
+    <div className="mx-auto flex w-full max-w-[1800px] flex-col items-center gap-10 px-4 pb-16 pt-6 sm:px-6 md:px-8">
+      {/* Top Section: Main Card + Sidebar */}
+      <div className="flex w-full items-start justify-center gap-6 max-[1180px]:flex-col max-[1180px]:items-center">
+        {/* Main Detail Card */}
+        <section className="w-full max-w-[1016px] flex-1 min-w-0 rounded-[24px] border border-[#efefef] bg-white shadow-[0_1px_20px_rgba(0,0,0,0.05)] overflow-hidden flex-shrink-0">
+        <div className="grid min-h-[500px] lg:max-h-[calc(100vh-140px)] grid-cols-1 lg:grid-cols-2">
+          {/* Image Section */}
+          <div className="relative flex items-center justify-center bg-white lg:rounded-l-[24px] lg:h-full overflow-hidden lg:border-r border-[#efefef] lg:p-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="absolute left-4 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-[#111] shadow-sm transition-colors hover:bg-[#f1f1f1] active:bg-[#e1e1e1]"
+              title="Kembali"
+            >
+              <ArrowLeft size={26} strokeWidth={2.4} />
+            </button>
 
-              <LikeButton 
-                postId={post.id} 
-                initialLiked={localIsLiked} 
-                initialCount={localLikeCount} 
+            <div className="group relative flex w-full items-center justify-center overflow-hidden max-lg:min-h-0 h-full">
+              <img
+                src={post.imageUrl}
+                alt={post.caption || "Pin image"}
+                className="h-full w-full max-h-[85vh] object-contain max-lg:max-h-[72vh]"
               />
-              <button className="w-11 h-11 flex items-center justify-center rounded-full text-[#111] hover:bg-[#f1f1f1] active:bg-[#e1e1e1] transition-all duration-200">
-                <MessageCircle size={24} strokeWidth={2.4} />
-              </button>
-              <button className="w-11 h-11 flex items-center justify-center rounded-full text-[#111] hover:bg-[#f1f1f1] active:bg-[#e1e1e1] transition-all duration-200">
-                <Upload size={24} strokeWidth={2.4} />
-              </button>
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setShowDropdown((prev) => !prev)}
-                  className={`w-11 h-11 flex items-center justify-center rounded-full text-[#111] hover:bg-[#f1f1f1] active:bg-[#e1e1e1] transition-all duration-200 ${showDropdown ? 'bg-[#f1f1f1]' : ''}`}
-                  title="More options"
-                  aria-expanded={showDropdown}
-                >
-                  <MoreHorizontal size={24} strokeWidth={2.4} />
-                </button>
 
-                {showDropdown && (
-                  <div className="absolute left-0 top-full mt-2 w-[280px] rounded-[16px] border border-gray-100 bg-white p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] z-30 animate-fade-in-up">
-                    <div className="px-3 py-2 text-[12px] font-bold text-[#767676] uppercase tracking-wider">
-                      Opsi Pin
-                    </div>
-                    {isOwner && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsEditingCaption(true);
-                            setShowDropdown(false);
-                          }}
-                          className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] hover:bg-[#f1f1f1] transition-colors"
-                        >
-                          Edit Pin
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleDeletePin}
-                          className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#cc0000] hover:bg-[#fff0f0] transition-colors disabled:opacity-60"
-                          disabled={deletePost.isPending}
-                        >
-                          Hapus Pin
-                        </button>
-                      </>
-                    )}
-                    
-                    {/* Toggle Switch */}
-                    <div className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] hover:bg-[#f1f1f1] cursor-pointer transition-colors"
-                         onClick={() => setAllowComments((prev) => !prev)}>
-                      <span>Izinkan komentar</span>
-                      <button
-                        type="button"
-                        className={`relative h-6 w-11 rounded-full p-1 cursor-pointer transition-all duration-300 ${
-                          allowComments ? "bg-[#0fa573]" : "bg-[#cdcdcd]"
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAllowComments((prev) => !prev);
-                        }}
-                      >
-                        <span
-                          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-300 ${
-                            allowComments ? "left-[22px]" : "left-0.5"
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleDownload}
-                      className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] hover:bg-[#f1f1f1] transition-colors"
-                    >
-                      Unduh gambar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        toast.success("Berhasil ditambahkan ke kolase");
-                        setShowDropdown(false);
-                      }}
-                      className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] hover:bg-[#f1f1f1] transition-colors"
-                    >
-                      Tambahkan ke kolase
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleCopyEmbed}
-                      className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] hover:bg-[#f1f1f1] transition-colors"
-                    >
-                      Dapatkan kode sisipan pin
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Right Options in Action Bar */}
-            <div className="flex items-center gap-3">
-              {/* Board Selector Dropdown */}
-              <div className="relative">
-                <button className="flex items-center gap-1.5 hover:bg-[#f1f1f1] active:bg-[#e1e1e1] px-4 py-3 rounded-full font-semibold text-[15px] text-[#111] transition-all duration-200">
-                  <span>Profil</span>
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" className="text-[#111] mt-0.5"><path d="M12 16.59L6.7 11.3a1 1 0 0 1 1.4-1.4l3.9 3.9 3.9-3.9a1 1 0 0 1 1.4 1.4l-5.3 5.3z"/></svg>
-                </button>
-              </div>
-
-                 {/* Simpan Button */}
-              <button className="inline-flex items-center justify-center bg-[#e60023] hover:bg-[#b6001a] text-white font-bold px-6 py-3 text-[16px] rounded-[16px] transition-all duration-200 cursor-pointer h-10 min-w-[75px]">
-                Simpan
-              </button>
-            </div>
-          </div>
-
-          {/* Main Image Container */}
-          <div className="w-full relative rounded-[20px] overflow-hidden mb-6 group cursor-zoom-in" style={{ boxShadow: "0 0 0 1px rgba(0,0,0,0.05)" }}>
-            <img 
-              src={post.imageUrl} 
-              alt={post.caption || "Pin image"} 
-              className="w-full h-auto max-h-[50vh] object-cover rounded-[20px]"
-            />
-            {/* AI modified pill (aesthetic detail) */}
-              <div className="absolute bottom-2 left-4 bg-black/60 backdrop-blur-md text-white text-[15px] font-semibold px-4 py-2 rounded-[12px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center h-10">
+              <div className="absolute bottom-4 left-4 rounded-full bg-black/55 px-3 py-1.5 text-[13px] font-semibold text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
                 AI modified
               </div>
-                          
-            {/* Interactive Image Tools (Always visible with premium glassmorphism) */}
-            <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
-               <button className="w-10 h-10 bg-white/85 backdrop-blur hover:bg-white active:scale-95 rounded-full flex items-center justify-center text-[#111] shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:scale-105 transition-all duration-200" title="Expand">
-                 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M11 5h2v14h-2zm-6 6h14v2H5z" transform="rotate(45, 12, 12)"/></svg>
-               </button>
-               <button className="w-10 h-10 bg-white/85 backdrop-blur hover:bg-white active:scale-95 rounded-full flex items-center justify-center text-[#111] shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:scale-105 transition-all duration-200" title="Visual search">
-                 <Search size={20} strokeWidth={2.5}/>
-               </button>
+
+              <div className="absolute bottom-4 right-4 flex flex-col gap-3">
+                <button
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/85 text-[#111] shadow-[0_2px_10px_rgba(0,0,0,0.16)] backdrop-blur transition hover:scale-105 hover:bg-white active:scale-95"
+                  title="Expand"
+                >
+                  <Maximize2 size={21} strokeWidth={2.4} />
+                </button>
+                <button
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/85 text-[#111] shadow-[0_2px_10px_rgba(0,0,0,0.16)] backdrop-blur transition hover:scale-105 hover:bg-white active:scale-95"
+                  title="Visual search"
+                >
+                  <Search size={21} strokeWidth={2.5} />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Title & Creator */}
-          <div className="px-2 mb-10">
-            {isEditingCaption ? (
-              <div className="mb-6">
-                <textarea
-                  value={captionDraft}
-                  maxLength={500}
-                  onChange={(event) => setCaptionDraft(event.target.value)}
-                  className="input-field min-h-[128px] resize-y text-xl font-semibold leading-tight"
-                  autoFocus
+          <aside className="relative min-w-0 lg:min-h-[500px] max-lg:flex max-lg:flex-col lg:h-full rounded-r-[24px]">
+            <div className="lg:absolute lg:inset-0 flex flex-col max-lg:relative max-lg:h-auto lg:h-full w-full overflow-hidden">
+              <div className="flex-none px-8 pt-8 lg:pl-10 lg:pr-8 max-lg:px-4 max-lg:pt-4">
+                <div className="mb-6 flex items-center justify-between gap-4 max-sm:flex-wrap">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <LikeButton
+                  postId={post.id}
+                  initialLiked={localIsLiked}
+                  initialCount={localLikeCount}
                 />
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-sm text-[#767676]">{captionDraft.length}/500</span>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCaptionDraft(post.caption || "");
-                        setIsEditingCaption(false);
-                      }}
-                      className="btn-secondary px-4 py-2"
-                      disabled={updateCaption.isPending}
-                    >
-                      <X size={18} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateCaption.mutate()}
-                      className="btn-primary px-4 py-2"
-                      disabled={updateCaption.isPending}
-                    >
-                      <Check size={18} />
-                    </button>
-                  </div>
+                <button className="flex h-12 w-12 items-center justify-center rounded-full text-[#111] transition-colors hover:bg-[#f1f1f1] active:bg-[#e1e1e1]">
+                  <svg aria-hidden="true" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+                    <path d="m20.27 16.72.28-.58q.93-1.89.95-4.14a9.5 9.5 0 1 0-5.36 8.55l.58-.28 4.31.76zm-3.26 5.63A11.5 11.5 0 1 1 22.36 17l.64 3.7a2 2 0 0 1-2.3 2.3z"></path>
+                  </svg>
+                </button>
+                <button className="flex h-12 w-12 items-center justify-center rounded-full text-[#111] transition-colors hover:bg-[#f1f1f1] active:bg-[#e1e1e1]">
+                  <Upload size={25} strokeWidth={2.3} />
+                </button>
+
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowDropdown((prev) => !prev)}
+                    className={`flex h-12 w-12 items-center justify-center rounded-full text-[#111] transition-colors hover:bg-[#f1f1f1] active:bg-[#e1e1e1] ${
+                      showDropdown ? "bg-[#f1f1f1]" : ""
+                    }`}
+                    title="More options"
+                    aria-expanded={showDropdown}
+                  >
+                    <MoreHorizontal size={25} strokeWidth={2.4} />
+                  </button>
+
+                  {showDropdown && (
+                    <div className="absolute left-0 top-full z-30 mt-2 w-[280px] rounded-[16px] border border-gray-100 bg-white p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+                      <div className="px-3 py-2 text-[12px] font-bold uppercase tracking-wide text-[#767676]">
+                        Opsi Pin
+                      </div>
+                      {isOwner && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsEditingCaption(true);
+                              setShowDropdown(false);
+                            }}
+                            className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1]"
+                          >
+                            Edit Pin
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDeletePin}
+                            className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#cc0000] transition-colors hover:bg-[#fff0f0] disabled:opacity-60"
+                            disabled={deletePost.isPending}
+                          >
+                            Hapus Pin
+                          </button>
+                        </>
+                      )}
+
+                      <div
+                        className="flex w-full cursor-pointer items-center justify-between gap-4 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1]"
+                        onClick={() => setAllowComments((prev) => !prev)}
+                      >
+                        <span>Izinkan komentar</span>
+                        <button
+                          type="button"
+                          className={`relative h-6 w-11 rounded-full p-1 transition-all duration-300 ${
+                            allowComments ? "bg-[#0fa573]" : "bg-[#cdcdcd]"
+                          }`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setAllowComments((prev) => !prev);
+                          }}
+                        >
+                          <span
+                            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-300 ${
+                              allowComments ? "left-[22px]" : "left-0.5"
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleDownload}
+                        className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1]"
+                      >
+                        Unduh gambar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          toast.success("Berhasil ditambahkan ke kolase");
+                          setShowDropdown(false);
+                        }}
+                        className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1]"
+                      >
+                        Tambahkan ke kolase
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCopyEmbed}
+                        className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1]"
+                      >
+                        Dapatkan kode sisipan pin
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-            ) : post.caption ? (
-              <h1 className="text-2xl sm:text-[24px] font-semibold text-[#111] leading-tight mb-6 break-words">
-                {post.caption}
-              </h1>
-            ) : isOwner ? (
-              <button
-                type="button"
-                onClick={() => setIsEditingCaption(true)}
-                className="mb-6 text-left text-[15px] font-semibold text-[#767676] hover:text-[#111]"
+
+              <div className="flex items-center gap-1">
+                <button className="flex h-12 items-center gap-2 rounded-full px-4 text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1] active:bg-[#e1e1e1]">
+                  Profil
+                  <ChevronDown size={16} strokeWidth={2.2} />
+                </button>
+                <button className="flex h-12 min-w-[94px] items-center justify-center rounded-full bg-[#e60023] px-5 text-[16px] font-semibold text-white transition-colors hover:bg-[#b6001a]">
+                  Simpan
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 pb-5">
+              <Link
+                to={`/profile/${post.creator.id}`}
+                className="group flex min-w-0 items-center gap-3"
               >
-                Add caption
-              </button>
-            ) : null}
-            <div className="flex items-center justify-between">
-              <Link to={`/profile/${post.creator.id}`} className="flex items-center gap-3 group">
                 {post.creator.avatarUrl ? (
-                  <img 
-                    src={post.creator.avatarUrl} 
-                    alt={post.creator.username} 
-                    className="w-12 h-12 rounded-full object-cover border border-gray-100 group-hover:brightness-95 transition-all" 
+                  <img
+                    src={post.creator.avatarUrl}
+                    alt={post.creator.username}
+                    className="h-9 w-9 rounded-full border border-gray-100 object-cover transition group-hover:brightness-95"
                   />
                 ) : (
-                  <div className={`w-12 h-12 rounded-full ${avatarBgColor} text-white flex items-center justify-center font-bold text-lg shadow-sm group-hover:brightness-95 transition-all`}>
+                  <div
+                    className={`flex h-9 w-9 items-center justify-center rounded-full ${avatarBgColor} text-base font-bold text-white shadow-sm transition group-hover:brightness-95`}
+                  >
                     {creatorInitials}
                   </div>
                 )}
-                <span className="font-semibold text-[14.5px] text-[#111] group-hover:underline">{post.creator.username}</span>
+                <span className="truncate text-[16px] font-normal text-[#111] group-hover:underline">
+                  {post.creator.username}
+                </span>
               </Link>
-              {!isOwner && (
-                <button className="inline-flex items-center justify-center bg-[#efefef] hover:bg-[#e2e2e2] text-[#111] font-bold px-4 py-2 text-[14px] rounded-full transition-all duration-200 cursor-pointer h-9 min-w-[70px]">
-                  Follow
+            </div>
+
+            <div className="mb-5">
+              {isEditingCaption ? (
+                <div>
+                  <textarea
+                    value={captionDraft}
+                    maxLength={500}
+                    onChange={(event) => setCaptionDraft(event.target.value)}
+                    className="input-field min-h-[104px] resize-y text-[20px] font-semibold leading-tight"
+                    autoFocus
+                  />
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-sm text-[#767676]">
+                      {captionDraft.length}/500
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCaptionDraft(post.caption || "");
+                          setIsEditingCaption(false);
+                        }}
+                        className="btn-secondary px-4 py-2"
+                        disabled={updateCaption.isPending}
+                      >
+                        <X size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateCaption.mutate()}
+                        className="btn-primary px-4 py-2"
+                        disabled={updateCaption.isPending}
+                      >
+                        <Check size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : post.caption ? (
+                <h1 className="text-[28px] font-bold leading-tight text-[#111]">
+                  {post.caption}
+                </h1>
+              ) : isOwner ? (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingCaption(true)}
+                  className="text-left text-[15px] font-semibold text-[#767676] hover:text-[#111]"
+                >
+                  Add caption
                 </button>
-              )}
+              ) : null}
+            </div>
+
+            {/* Garis Horizontal pembatas - Ubah "h-[1px]" untuk mengatur ketebalan garis */}
+            <hr className="h-[1px] w-full border-0 bg-[#efefef] mb-5" />
+            <div className="flex flex-col">
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <h2 className="text-[20px] font-bold text-[#111]">
+                  {post.commentCount > 0
+                    ? `${post.commentCount} Komentar`
+                    : "Komentar"}
+                </h2>
+                <button className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[#f1f1f1]">
+                  <ChevronDown size={22} strokeWidth={2.2} />
+                </button>
+              </div>
             </div>
           </div>
-
-          {/* Comments Section */}
-          <div className="px-2 pb-10">
-            <h2 className="font-semibold text-[20px] text-[#111] mb-6">
-              {post.commentCount > 0 ? `${post.commentCount} Komentar` : "Belum ada komentar"}
-            </h2>
-            
-            {allowComments ? (
-              <CommentSection 
-                postId={post.id} 
-                comments={post.comments || []} 
-                onOpenAuthModal={() => {}} 
-              />
-            ) : (
-              <div className="rounded-2xl bg-[#f7f7f7] px-4 py-5 text-center text-[14px] font-medium text-[#767676]">
-                Komentar dinonaktifkan untuk Pin ini.
-              </div>
-            )}
-          </div>
+          <CommentSection
+            postId={post.id}
+            postOwnerId={post.creator.id}
+            comments={post.comments || []}
+            onOpenAuthModal={() => {}}
+            allowComments={allowComments}
+          />
         </div>
+      </aside>
+    </div>
+  </section>
 
-        {/* RIGHT COLUMN: Masonry Grid of Related Pins */}
-        <div className="flex-1 min-w-0 pb-10 pt-2 lg:pt-0">
-           {/* Mobile only back button helper */}
-           <div className="lg:hidden flex items-center gap-3 mb-6 px-2">
-             <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100">
-                <ArrowLeft size={24} />
-             </button>
-             <h2 className="font-semibold text-[20px] text-[#111]">Explore more</h2>
-           </div>
-
-           <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-2 xl:columns-3 2xl:columns-4 gap-4">
-              {relatedPosts.map((relatedPost: any) => (
-                 <Link to={`/post/${relatedPost.id}`} key={relatedPost.id} className="block mb-4 break-inside-avoid group relative rounded-2xl overflow-hidden cursor-zoom-in">
-                    <img 
-                      src={relatedPost.imageUrl} 
-                      alt={relatedPost.caption || "Related pin"} 
-                      loading="lazy"
-                      className="w-full h-auto object-cover rounded-[20px] shadow-sm transition-transform duration-300 group-hover:brightness-[0.85]"
-                    />
-                    {/* Hover Overlay like main page */}
-                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-between pointer-events-none">
-                       <div className="flex justify-end gap-2 self-end mt-auto">
-                          <LikeButton 
-                            postId={relatedPost.id} 
-                            initialLiked={relatedPost.isLiked} 
-                            initialCount={relatedPost.likeCount || 0} 
-                            compact={true} 
-                          />
-                       </div>
-                    </div>
-                 </Link>
-              ))}
-           </div>
-        </div>
-
+        {/* Sidebar Recommendations (Desktop Only) */}
+        {sidebarPosts.length > 0 && (
+          <aside className="w-[300px] xl:w-[360px] flex-none max-[1180px]:hidden">
+            <div className="columns-2 gap-4">
+              {sidebarPosts.map(renderRelatedPost)}
+            </div>
+          </aside>
+        )}
       </div>
+
+      {/* Bottom Related Pins Section */}
+      <section className="w-full mt-4 flex flex-col">
+        
+        {/* Desktop View: Show only bottomPosts (sidebar handles the rest) */}
+        <div className="hidden min-[1181px]:block w-full columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 px-2">
+          {bottomPosts.map(renderRelatedPost)}
+        </div>
+
+        {/* Mobile/Tablet View: Show all relatedPosts */}
+        <div className="min-[1181px]:hidden w-full columns-2 sm:columns-3 md:columns-4 gap-4 px-2">
+          {relatedPosts.map(renderRelatedPost)}
+        </div>
+      </section>
     </div>
   );
 }

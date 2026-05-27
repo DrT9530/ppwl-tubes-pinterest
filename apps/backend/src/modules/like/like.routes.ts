@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { prisma } from "../../lib/prisma";
 import { authGuard } from "../../middleware/auth";
+import { sendNewNotification } from "../websocket";
 
 export const likeRoutes = new Elysia({ prefix: "/posts" })
   .use(authGuard)
@@ -41,7 +42,7 @@ export const likeRoutes = new Elysia({ prefix: "/posts" })
 
       // Buat notifikasi untuk post owner (kecuali kalau like sendiri)
       if (post.creatorId !== user.id) {
-        await prisma.notification.create({
+        const newNotif = await prisma.notification.create({
           data: {
             userId: post.creatorId,
             type: "LIKE",
@@ -49,6 +50,7 @@ export const likeRoutes = new Elysia({ prefix: "/posts" })
             actorId: user.id,
           },
         });
+        sendNewNotification(post.creatorId, newNotif.id);
       }
 
       const likeCount = await prisma.like.count({

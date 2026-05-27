@@ -1,8 +1,9 @@
 // components/Sidebar.tsx — Pinterest-style vertical sidebar navigation
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../stores/auth.store";
+import { Link, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { MessageDropdown } from "./MessageDropdown"; 
+import { NotificationSidebar } from "./NotificationSidebar";
+import { useNotificationStore } from "../stores/notification.store";
 
 import {
   Home,
@@ -12,32 +13,42 @@ import {
   Bell,
   MessageCircle,
   Settings,
-  LogOut,
-  User,
 } from "lucide-react";
 
 export function Sidebar() {
-  const { user, isAuthenticated, logout } = useAuthStore();
   const location = useLocation();
-  const navigate = useNavigate();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // State dan Ref untuk Dropdown Pesan
   const [showMsgDropdown, setShowMsgDropdown] = useState(false);
+  const [isMsgClosing, setIsMsgClosing] = useState(false);
   const msgDropdownRef = useRef<HTMLDivElement>(null);
+
+  // State dan Ref untuk Notification Sidebar
+  const [showNotifSidebar, setShowNotifSidebar] = useState(false);
+  const [isNotifClosing, setIsNotifClosing] = useState(false);
+  const notifSidebarRef = useRef<HTMLDivElement>(null);
+
+  const closeNotif = () => {
+    setIsNotifClosing(true);
+    setTimeout(() => {
+      setShowNotifSidebar(false);
+      setIsNotifClosing(false);
+    }, 280); // matches animation duration
+  };
+
+  const closeMsg = () => {
+    setIsMsgClosing(true);
+    setTimeout(() => {
+      setShowMsgDropdown(false);
+      setIsMsgClosing(false);
+    }, 280);
+  };
+
+  const { unreadCount } = useNotificationStore();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-
-      // Klik luar untuk menu profil
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(target)
-      ) {
-        setShowProfileMenu(false);
-      }
 
       // Klik luar untuk dropdown pesan
       if (
@@ -45,8 +56,19 @@ export function Sidebar() {
         !msgDropdownRef.current.contains(target)
       ) {
         const clickedToggleButton = (target as HTMLElement).closest("#sidebar-messages");
-        if (!clickedToggleButton) {
-          setShowMsgDropdown(false);
+        if (!clickedToggleButton && showMsgDropdown) {
+          closeMsg();
+        }
+      }
+
+      // Klik luar untuk sidebar notifikasi
+      if (
+        notifSidebarRef.current &&
+        !notifSidebarRef.current.contains(target)
+      ) {
+        const clickedToggleButton = (target as HTMLElement).closest("#sidebar-notifications");
+        if (!clickedToggleButton && showNotifSidebar) {
+          closeNotif();
         }
       }
     }
@@ -54,19 +76,11 @@ export function Sidebar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = async () => {
-    await logout();
-    setShowProfileMenu(false);
-    setShowMsgDropdown(false);
-    navigate("/");
-  };
-
   const mainNavItems = [
     { icon: Home, path: "/", label: "Home" },
     { icon: Compass, path: "/explore", label: "Explore" },
     { icon: LayoutGrid, path: "/boards", label: "Your boards" },
     { icon: Plus, path: "/create", label: "Create" },
-    { icon: Bell, path: "/notifications", label: "Updates" },
   ];
 
   return (
@@ -84,7 +98,7 @@ export function Sidebar() {
         <nav className="sidebar-nav">
           {mainNavItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path && !showMsgDropdown;
+            const isActive = location.pathname === item.path && !showMsgDropdown && !showNotifSidebar;
             
             return (
               <Link
@@ -103,12 +117,62 @@ export function Sidebar() {
             );
           })}
 
+          {/* ── TOMBOL NOTIFIKASI ── */}
+          <div className="relative" ref={notifSidebarRef}>
+            <button
+              type="button"
+              id="sidebar-notifications"
+              onClick={() => {
+                if (showNotifSidebar) {
+                  closeNotif();
+                } else {
+                  setShowNotifSidebar(true);
+                  if (showMsgDropdown) closeMsg();
+                }
+              }}
+              className={`sidebar-nav-item w-full flex items-center justify-center cursor-pointer border-0 bg-transparent transition-colors ${
+                showNotifSidebar ? "bg-gray-100 text-[#111]" : ""
+              }`}
+              title="Updates"
+            >
+              <div className="relative flex items-center justify-center w-full h-full">
+                <Bell
+                  size={24}
+                  strokeWidth={showNotifSidebar ? 2.5 : 1.8}
+                  fill={showNotifSidebar ? "currentColor" : "none"}
+                />
+                {unreadCount > 0 && (
+                  <span className="absolute top-[4px] right-[8px] min-w-[18px] h-[18px] bg-[#E60023] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </div>
+            </button>
+
+            {/* PANEL SIDEBAR NOTIFIKASI MELAYANG FIXED */}
+            {showNotifSidebar && (
+              <div 
+                className="fixed left-[72px] top-0 bottom-0 z-[9999] py-4 pr-4"
+                style={{ animation: isNotifClosing ? "var(--animate-slide-out-left)" : "var(--animate-slide-right)" }}
+              > 
+                <NotificationSidebar onClose={closeNotif} />
+              </div>
+            )}
+          </div>
+
           {/* ── TOMBOL MESSAGES ── */}
           <div className="relative" ref={msgDropdownRef}>
             <button
               type="button"
               id="sidebar-messages"
-              onClick={() => setShowMsgDropdown(!showMsgDropdown)}
+              onClick={() => {
+                if (showMsgDropdown) {
+                  closeMsg();
+                } else {
+                  setShowMsgDropdown(true);
+                  if (showNotifSidebar) closeNotif();
+                }
+              }}
               className={`sidebar-nav-item w-full flex items-center justify-center cursor-pointer border-0 bg-transparent transition-colors ${
                 showMsgDropdown ? "bg-gray-100 text-[#111]" : ""
               }`}
@@ -123,8 +187,11 @@ export function Sidebar() {
 
             {/* PANEL DROPDOWN MELAYANG FIXED */}
             {showMsgDropdown && (
-              <div className="fixed left-[88px] top-[16px] z-[9999]"> 
-                <MessageDropdown onClose={() => setShowMsgDropdown(false)} />
+              <div 
+                className="fixed left-[88px] top-[16px] z-[9999]"
+                style={{ animation: isMsgClosing ? "var(--animate-slide-out-left)" : "var(--animate-slide-right)" }}
+              > 
+                <MessageDropdown onClose={closeMsg} />
               </div>
             )}
           </div>

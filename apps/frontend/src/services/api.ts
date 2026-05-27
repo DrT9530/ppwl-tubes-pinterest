@@ -83,6 +83,18 @@ class ApiClient {
     return this.handleResponse<T>(response);
   }
 
+  async put<T>(path: string, body?: unknown, options?: FetchOptions): Promise<T> {
+    const url = this.buildUrl(path, options?.params);
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: this.getHeaders(),
+      credentials: "include",
+      body: body ? JSON.stringify(body) : undefined,
+      ...options,
+    });
+    return this.handleResponse<T>(response);
+  }
+
   async delete<T>(path: string, options?: FetchOptions): Promise<T> {
     const url = this.buildUrl(path, options?.params);
     const response = await fetch(url, {
