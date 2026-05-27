@@ -169,25 +169,22 @@ export default function PostDetailPage() {
   return (
     <div className="flex justify-center w-full max-w-[1800px] mx-auto relative px-4 sm:px-6 lg:px-8 pt-8 pb-24">
       
-      {/* Sticky Back Button (Simple arrow icon without card/shadow background) */}
-      <div className="hidden lg:flex sticky top-24 self-start mr-4 shrink-0 z-20">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-[#f1f1f1] active:bg-[#e1e1e1] text-[#111] transition-all duration-200"
-          title="Back"
-        >
-          <ArrowLeft size={28} strokeWidth={2.4} className="text-[#111]" />
-        </button>
-      </div>
-
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 w-full max-w-[1400px]">
         
         {/* LEFT COLUMN: Pin Detail (Unified White Card Container) */}
         <div className="w-full lg:w-[620px] shrink-0 bg-white rounded-[32px] shadow-[0_1px_24px_rgba(0,0,0,0.06)] border border-[#efefef] p-6 sm:p-8 flex flex-col mx-auto lg:mx-0 self-start">
           
-          {/* Action Bar (Sticky Inside Card) */}
-          <div className="flex items-center justify-between pb-4 sticky top-[76px] bg-white z-20 pt-1">
-            <div className="flex items-center gap-3">
+          {/* Action Bar (Normal Position Atas Foto) */}
+<div className="flex items-center justify-between pb-4 bg-white pt-1">
+  <div className="flex items-center gap-3">
+              <button 
+      onClick={() => navigate(-1)} 
+      className="w-11 h-11 flex items-center justify-center rounded-full text-[#111] hover:bg-[#f1f1f1] active:bg-[#e1e1e1] transition-all duration-200"
+      title="Kembali"
+    >
+      <ArrowLeft size={24} strokeWidth={2.4} />
+    </button>
+
               <LikeButton 
                 postId={post.id} 
                 initialLiked={localIsLiked} 
@@ -299,25 +296,25 @@ export default function PostDetailPage() {
                 </button>
               </div>
 
-              {/* Simpan Button */}
-              <button className="bg-[#e60023] hover:bg-[#ad081b] active:scale-95 text-white font-semibold rounded-full px-5 py-3 text-[15px] transition-all duration-200">
+                 {/* Simpan Button */}
+              <button className="inline-flex items-center justify-center bg-[#e60023] hover:bg-[#b6001a] text-white font-bold px-6 py-3 text-[16px] rounded-[16px] transition-all duration-200 cursor-pointer h-10 min-w-[75px]">
                 Simpan
               </button>
             </div>
           </div>
 
           {/* Main Image Container */}
-          <div className="w-full relative rounded-[24px] overflow-hidden mb-6 group cursor-zoom-in" style={{ boxShadow: "0 0 0 1px rgba(0,0,0,0.05)" }}>
+          <div className="w-full relative rounded-[20px] overflow-hidden mb-6 group cursor-zoom-in" style={{ boxShadow: "0 0 0 1px rgba(0,0,0,0.05)" }}>
             <img 
               src={post.imageUrl} 
               alt={post.caption || "Pin image"} 
-              className="w-full h-auto max-h-[85vh] object-cover rounded-[24px]"
+              className="w-full h-auto max-h-[50vh] object-cover rounded-[20px]"
             />
             {/* AI modified pill (aesthetic detail) */}
-            <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white text-[13px] font-semibold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-              AI modified
-            </div>
-            
+              <div className="absolute bottom-2 left-4 bg-black/60 backdrop-blur-md text-white text-[15px] font-semibold px-4 py-2 rounded-[12px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center h-10">
+                AI modified
+              </div>
+                          
             {/* Interactive Image Tools (Always visible with premium glassmorphism) */}
             <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
                <button className="w-10 h-10 bg-white/85 backdrop-blur hover:bg-white active:scale-95 rounded-full flex items-center justify-center text-[#111] shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:scale-105 transition-all duration-200" title="Expand">
@@ -366,7 +363,7 @@ export default function PostDetailPage() {
                 </div>
               </div>
             ) : post.caption ? (
-              <h1 className="text-2xl sm:text-[28px] font-semibold text-[#111] leading-tight mb-6 break-words">
+              <h1 className="text-2xl sm:text-[24px] font-semibold text-[#111] leading-tight mb-6 break-words">
                 {post.caption}
               </h1>
             ) : isOwner ? (
@@ -391,10 +388,10 @@ export default function PostDetailPage() {
                     {creatorInitials}
                   </div>
                 )}
-                <span className="font-semibold text-[15px] text-[#111] group-hover:underline">{post.creator.username}</span>
+                <span className="font-semibold text-[14.5px] text-[#111] group-hover:underline">{post.creator.username}</span>
               </Link>
               {!isOwner && (
-                <button className="bg-[#e9e9e9] hover:bg-[#e2e2e2] active:scale-95 text-[#111] font-semibold rounded-full px-5 py-3 text-[15px] transition-colors">
+                <button className="inline-flex items-center justify-center bg-[#efefef] hover:bg-[#e2e2e2] text-[#111] font-bold px-4 py-2 text-[14px] rounded-full transition-all duration-200 cursor-pointer h-9 min-w-[70px]">
                   Follow
                 </button>
               )}

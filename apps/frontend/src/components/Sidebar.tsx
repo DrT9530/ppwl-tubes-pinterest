@@ -2,6 +2,8 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/auth.store";
 import { useState, useRef, useEffect } from "react";
+import { MessageDropdown } from "./MessageDropdown"; 
+
 import {
   Home,
   Compass,
@@ -21,13 +23,31 @@ export function Sidebar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
+  // State dan Ref untuk Dropdown Pesan
+  const [showMsgDropdown, setShowMsgDropdown] = useState(false);
+  const msgDropdownRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+
+      // Klik luar untuk menu profil
       if (
         profileMenuRef.current &&
-        !profileMenuRef.current.contains(event.target as Node)
+        !profileMenuRef.current.contains(target)
       ) {
         setShowProfileMenu(false);
+      }
+
+      // Klik luar untuk dropdown pesan
+      if (
+        msgDropdownRef.current &&
+        !msgDropdownRef.current.contains(target)
+      ) {
+        const clickedToggleButton = (target as HTMLElement).closest("#sidebar-messages");
+        if (!clickedToggleButton) {
+          setShowMsgDropdown(false);
+        }
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -37,18 +57,16 @@ export function Sidebar() {
   const handleLogout = async () => {
     await logout();
     setShowProfileMenu(false);
+    setShowMsgDropdown(false);
     navigate("/");
   };
 
-
-  // All main nav items grouped together (logo → home → ... → messages)
   const mainNavItems = [
-    { icon: Home, path: "/", label: "Home", filled: true },
+    { icon: Home, path: "/", label: "Home" },
     { icon: Compass, path: "/explore", label: "Explore" },
     { icon: LayoutGrid, path: "/boards", label: "Your boards" },
     { icon: Plus, path: "/create", label: "Create" },
     { icon: Bell, path: "/notifications", label: "Updates" },
-    { icon: MessageCircle, path: "/messages", label: "Messages" },
   ];
 
   return (
@@ -66,7 +84,8 @@ export function Sidebar() {
         <nav className="sidebar-nav">
           {mainNavItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path && !showMsgDropdown;
+            
             return (
               <Link
                 key={item.path}
@@ -83,10 +102,36 @@ export function Sidebar() {
               </Link>
             );
           })}
+
+          {/* ── TOMBOL MESSAGES ── */}
+          <div className="relative" ref={msgDropdownRef}>
+            <button
+              type="button"
+              id="sidebar-messages"
+              onClick={() => setShowMsgDropdown(!showMsgDropdown)}
+              className={`sidebar-nav-item w-full flex items-center justify-center cursor-pointer border-0 bg-transparent transition-colors ${
+                showMsgDropdown ? "bg-gray-100 text-[#111]" : ""
+              }`}
+              title="Messages"
+            >
+              <MessageCircle
+                size={24}
+                strokeWidth={showMsgDropdown ? 2.5 : 1.8}
+                fill={showMsgDropdown ? "currentColor" : "none"}
+              />
+            </button>
+
+            {/* PANEL DROPDOWN MELAYANG FIXED */}
+            {showMsgDropdown && (
+              <div className="fixed left-[88px] top-[16px] z-[9999]"> 
+                <MessageDropdown onClose={() => setShowMsgDropdown(false)} />
+              </div>
+            )}
+          </div>
         </nav>
       </div>
 
-      {/* ── Bottom group: Settings (far away from main group) ── */}
+      {/* ── Bottom group: Settings ── */}
       <div className="sidebar-bottom-group">
         <Link
           to="/settings"
@@ -97,39 +142,6 @@ export function Sidebar() {
           <Settings size={24} strokeWidth={1.8} />
         </Link>
       </div>
-
-      {/* Profile dropdown (hidden, triggered from SearchHeader avatar) */}
-      {isAuthenticated && showProfileMenu && (
-        <div
-          ref={profileMenuRef}
-          className="absolute left-full bottom-16 ml-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-[60]"
-          style={{ animation: "var(--animate-scale-in)" }}
-        >
-          <div className="p-4 border-b border-gray-100">
-            <p className="font-semibold text-sm">{user?.username}</p>
-            <p className="text-xs text-gray-500">{user?.email}</p>
-          </div>
-          <div className="py-2">
-            <button
-              onClick={() => {
-                navigate(`/profile/${user?.id}`);
-                setShowProfileMenu(false);
-              }}
-              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors"
-            >
-              <User size={18} />
-              Your Profile
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors text-red-500"
-            >
-              <LogOut size={18} />
-              Log out
-            </button>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }
