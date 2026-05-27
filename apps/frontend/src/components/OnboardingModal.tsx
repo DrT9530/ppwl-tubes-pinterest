@@ -17,19 +17,13 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const [isTurningFeed, setIsTurningFeed] = useState(false);
 
   const moods = [
-    { id: "drawing", label: "Drawing", image: "https://i.pinimg.com/736x/21/dd/6d/21dd6d9255ec03ce653df3b84f3ccb0f.jpg" },
-    { id: "wallpapers", label: "Phone wallpapers", image: "https://i.pinimg.com/736x/8f/35/28/8f35281e742880a6be12b5d4ba11a5ba.jpg" },
-    { id: "relaxation", label: "Relaxation", image: "https://i.pinimg.com/736x/6f/a6/5e/6fa65e9c0f99723528b86eab53be865b.jpg" },
-    { id: "weddings", label: "Weddings", image: "https://i.pinimg.com/736x/82/53/78/825378ca601b0dc5ab3a9f07d2f92476.jpg" },
-    { id: "renovation", label: "Home renovation", image: "https://i.pinimg.com/736x/01/be/1e/01be1e360fbf92b34be94bb1082387d3.jpg" },
-    { id: "sneakers", label: "Sneakers", image: "https://i.pinimg.com/736x/e4/c7/ab/e4c7abbaf73b5f00e9ec14fb7cdb04fc.jpg" },
-    { id: "spaces", label: "Small spaces", image: "https://i.pinimg.com/736x/1a/f6/54/1af6540c4e09520a3af1a39d89280ab4.jpg" },
-    { id: "classroom", label: "Classroom ideas", image: "https://i.pinimg.com/736x/55/7e/17/557e17ddb0f1fa43560249c5eb75225c.jpg" },
-    { id: "pop", label: "Pop culture", image: "https://i.pinimg.com/736x/c5/40/ea/c540eab717b0d7756f16fcd3938508eb.jpg" },
-    { id: "cooking", label: "Cooking", image: "https://i.pinimg.com/736x/77/8d/f3/778df31ed234b6b1cb1a1ef7a9cddb6e.jpg" },
-    { id: "nature", label: "Nature photography", image: "https://i.pinimg.com/736x/d9/56/9b/d9569bbed4393e2ceb1af7ba64fdf86a.jpg" },
-    { id: "quotes", label: "Quotes", image: "https://i.pinimg.com/736x/e8/1f/2f/e81f2fce4d436b7cfcdfa804aeb5b3c5.jpg" },
-  ];
+  { id: "1", label: "Reading", icon: "📚", bg: "bg-[#F0F5F9]" },
+  { id: "2", label: "Gaming", icon: "🎮", bg: "bg-[#F9F3EE]" },
+  { id: "3", label: "Cooking", icon: "🍳", bg: "bg-[#EDF7ED]" },
+  { id: "4", label: "Coding", icon: "💻", bg: "bg-[#F3EAF8]" },
+  { id: "5", label: "Music", icon: "🎵", bg: "bg-[#FFF4E5]" },
+  { id: "6", label: "Travel", icon: "✈️", bg: "bg-[#E6F4EA]" },
+];
 
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => Math.max(1, prev - 1));
@@ -128,97 +122,130 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
           </div>
         )}
 
-        {/* --- STEP 2: Location/Language --- */}
-        {step === 2 && (
-          <div className="flex flex-col px-10 pt-20 pb-10 h-full flex-grow text-left">
-            <h1 className="text-[32px] font-semibold text-[#111] leading-tight mb-2 max-w-[350px]">
-              Where do you live, and what language do you speak?
-            </h1>
-            <p className="text-[15px] text-[#111] mb-8">This information will always be private</p>
-            
-            <div className="flex flex-col gap-4 mb-10 max-w-[350px]">
-              {/* Select Container */}
-              <div className="relative border-2 border-[#cdcdcd] rounded-2xl focus-within:border-[#111] transition-colors p-2">
-                <label className="text-[12px] text-[#111] absolute top-1.5 left-3">Country</label>
-                <select 
-                  value={country} 
-                  onChange={(e) => setCountry(e.target.value)}
-                  className="w-full pt-4 pb-1 px-1 bg-transparent text-[16px] text-[#111] outline-none appearance-none cursor-pointer"
-                >
-                  <option>Indonesia</option>
-                  <option>United States</option>
-                  <option>United Kingdom</option>
-                  <option>Japan</option>
-                  <option>South Korea</option>
-                </select>
-                <svg className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 19.5L.66 8.29c-.88-.86-.88-2.27 0-3.14.88-.87 2.3-.87 3.18 0L12 13.21l8.16-8.06c.88-.87 2.3-.87 3.18 0 .88.87.88 2.28 0 3.14L12 19.5z"></path>
-                </svg>
-              </div>
+{/* --- STEP 2: Location/Language --- */}
+{step === 2 && (
+  <div className="flex flex-col items-center justify-center px-9 py-10 text-center w-full min-h-[500px]">
+    
+    {/* Header Section */}
+    <div className="mb-8">
+      <h1 className="text-[24px] sm:text-[26px] font-semibold text-[#111] tracking-tight max-w-[340px] leading-tight mb-2">
+        Where do you live, and what language do you speak?
+      </h1>
+      <p className="text-[14px] text-[#767676]">
+        This information will always be private
+      </p>
+    </div>
+    
+    {/* Form Section: Label sekarang di LUAR kotak */}
+    <div className="w-full max-w-[280px] flex flex-col gap-5 text-left mb-10">
+      
+      {/* Country Group */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[14px] font-semibold text-[#111] ml-1">Country</label>
+        <div className="relative border-2 border-[#cdcdcd] rounded-2xl focus-within:border-[#111] transition-colors bg-white px-3 py-2.5">
+          <select 
+            value={country} 
+            onChange={(e) => setCountry(e.target.value)}
+            className="w-full bg-transparent text-[15px] font-medium text-[#111] outline-none appearance-none cursor-pointer"
+          >
+            <option>Indonesia</option>
+            <option>United States</option>
+            <option>United Kingdom</option>
+            <option>Japan</option>
+            <option>South Korea</option>
+          </select>
+          <svg className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#111]" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 19.5L.66 8.29c-.88-.86-.88-2.27 0-3.14.88-.87 2.3-.87 3.18 0L12 13.21l8.16-8.06c.88-.87 2.3-.87 3.18 0 .88.87.88 2.28 0 3.14L12 19.5z"></path>
+          </svg>
+        </div>
+      </div>
 
-              {/* Select Container */}
-              <div className="relative border-2 border-[#cdcdcd] rounded-2xl focus-within:border-[#111] transition-colors p-2">
-                <label className="text-[12px] text-[#111] absolute top-1.5 left-3">Language</label>
-                <select 
-                  value={language} 
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full pt-4 pb-1 px-1 bg-transparent text-[16px] text-[#111] outline-none appearance-none cursor-pointer"
-                >
-                  <option>English (US)</option>
-                  <option>Bahasa Indonesia</option>
-                </select>
-                <svg className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 19.5L.66 8.29c-.88-.86-.88-2.27 0-3.14.88-.87 2.3-.87 3.18 0L12 13.21l8.16-8.06c.88-.87 2.3-.87 3.18 0 .88.87.88 2.28 0 3.14L12 19.5z"></path>
-                </svg>
-              </div>
-            </div>
+      {/* Language Group */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[14px] font-semibold text-[#111] ml-1">Language</label>
+        <div className="relative border-2 border-[#cdcdcd] rounded-2xl focus-within:border-[#111] transition-colors bg-white px-3 py-2.5">
+          <select 
+            value={language} 
+            onChange={(e) => setLanguage(e.target.value)}
+            className="w-full bg-transparent text-[15px] font-medium text-[#111] outline-none appearance-none cursor-pointer"
+          >
+            <option>English (US)</option>
+            <option>Bahasa Indonesia</option>
+          </select>
+          <svg className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#111]" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 19.5L.66 8.29c-.88-.86-.88-2.27 0-3.14.88-.87 2.3-.87 3.18 0L12 13.21l8.16-8.06c.88-.87 2.3-.87 3.18 0 .88.87.88 2.28 0 3.14L12 19.5z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
 
-            <div className="mt-auto flex justify-center">
-              <button onClick={handleNext} className="w-full max-w-[350px] py-3.5 rounded-full font-semibold text-[15px] bg-[#e60023] text-white hover:bg-[#ad081b] transition-colors">
-                Continue
-              </button>
-            </div>
-          </div>
-        )}
+    {/* Button Section */}
+    <div className="w-full max-w-[280px]">
+      <button onClick={handleNext} className="w-full py-3.5 rounded-full font-bold text-[15px] bg-[#e60023] text-white hover:bg-[#ad081b] transition-all shadow-sm">
+        Continue
+      </button>
+    </div>
+    
+  </div>
+)}
 
         {/* --- STEP 3: Name --- */}
-        {step === 3 && (
-          <div className="flex flex-col px-10 pt-20 pb-10 h-full flex-grow text-left">
-            <h1 className="text-[32px] font-semibold text-[#111] leading-tight mb-2 max-w-[350px]">
-              Nice to meet you! What's your name?
-            </h1>
-            <p className="text-[15px] text-[#111] mb-8 max-w-[350px]">
-              Your answers to the next few questions will help us find the right ideas for you
-            </p>
-            
-            <div className="flex flex-col gap-2 mb-10 max-w-[350px]">
-              <div className="relative border-2 border-[#cdcdcd] rounded-2xl focus-within:border-[#111] transition-colors p-2">
-                <label className="text-[12px] text-[#111] absolute top-1.5 left-3">Name</label>
-                <input 
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full pt-4 pb-1 px-1 bg-transparent text-[16px] text-[#111] outline-none"
-                />
-              </div>
-              {user?.email && <p className="text-[12px] text-[#767676] ml-2">{user.email}</p>}
-            </div>
+{step === 3 && (
+  <div className="flex flex-col items-center justify-center px-9 py-10 text-center w-full min-h-[460px]">
+    
+    {/* Email ditaruh di paling atas sebagai penanda konteks akun */}
+    {user?.email && (
+      <p className="text-[12px] text-[#767676] mb-2 font-medium tracking-wide truncate max-w-[280px]">
+        {user.email}
+      </p>
+    )}
 
-            <div className="mt-auto flex flex-col items-center gap-4">
-              <button 
-                disabled={!name}
-                onClick={handleNext} 
-                className="w-full max-w-[350px] py-3.5 rounded-full font-semibold text-[15px] transition-colors"
-                style={{
-                  backgroundColor: name ? "#e60023" : "#e9e9e9",
-                  color: name ? "white" : "#a5a5a5",
-                }}
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        )}
+    {/* Judul Utama */}
+    <h1 className="text-[24px] sm:text-[26px] font-semibold mb-2 text-[#111] tracking-tight max-w-[340px] leading-tight">
+      Nice to meet you! What's your name?
+    </h1>
+    
+    {/* Deskripsi */}
+    <p className="text-[14px] text-[#767676] mb-8 max-w-[320px] leading-relaxed">
+      Your answers to the next few questions will help us find the right ideas for you
+    </p>
+    
+    {/* Form Input Container */}
+    <div className="w-full max-w-[280px] text-left block">
+      {/* Label Name - Menempel pas di atas outline */}
+      <label className="block text-[14px] font-semibold text-[#111] ml-1 mb-1.5 leading-none">
+        Name
+      </label>
+      
+      {/* Outline Tabel Isi Name */}
+      <div className="w-full border-2 border-[#cdcdcd] rounded-2xl focus-within:border-[#111] transition-colors bg-white px-4 py-3">
+        <input 
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="First name"
+          className="w-full bg-transparent text-[15px] font-medium text-[#111] outline-none placeholder-[#a5a5a5]"
+        />
+      </div>
+    </div>
+
+    {/* Tombol Aksi - Diturunkan sedikit (mt-8) biar dapet gap ideal mirip birthdate */}
+    <div className="w-full max-w-[280px] mt-8">
+      <button 
+        disabled={!name}
+        onClick={handleNext} 
+        className="w-full py-3.5 rounded-full font-semibold text-[15px] transition-all shadow-sm cursor-pointer disabled:cursor-not-allowed"
+        style={{
+          backgroundColor: name ? "#e60023" : "#e9e9e9",
+          color: name ? "white" : "#a5a5a5",
+        }}
+      >
+        Continue
+      </button>
+    </div>
+
+  </div>
+)}
 
         {/* --- STEP 4: Gender --- */}
         {step === 4 && (
@@ -243,63 +270,74 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
           </div>
         )}
 
-        {/* --- STEP 5: Mood --- */}
-        {step === 5 && (
-          <div className="flex flex-col h-full min-h-0 overflow-hidden pt-10 px-5 pb-4">
-            <div className="text-center mb-3 flex-shrink-0">
-              <h1 className="text-[26px] font-semibold text-[#111] mb-1">What are you in the mood to do?</h1>
+{/* --- STEP 5: Mood --- */}
+{step === 5 && (
+  <div className="flex flex-col items-center justify-center px-9 py-10 text-center w-full min-h-[460px]">
+    
+    {/* Judul Utama & Deskripsi */}
+    <div className="mb-6 flex-shrink-0">
+      <h1 className="text-[24px] sm:text-[26px] font-semibold text-[#111] tracking-tight max-w-[340px] leading-tight mb-1">
+        What are you in the mood to do?
+      </h1>
+      <p className="text-[14px] text-[#767676]">
+        Pick 3 or more to continue
+      </p>
+    </div>
+    
+    {/* Grid Area - Ditambahkan flex-grow agar mendorong tombol di bawahnya */}
+    <div className="w-full max-w-[340px] max-h-[240px] flex-grow overflow-y-auto px-1.5 pb-2" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+      <style>{`.overflow-y-auto::-webkit-scrollbar { display: none; }`}</style>
+      
+      <div className="grid grid-cols-3 gap-3">
+        {moods.map((mood) => {
+          const isSelected = selectedMoods.includes(mood.id);
+          return (
+            <div 
+              key={mood.id}
+              onClick={() => handleMoodToggle(mood.id)}
+              className={`relative rounded-2xl p-3 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 aspect-square border-2 ${mood.bg} ${
+                isSelected ? "border-black scale-95 shadow-sm" : "border-transparent hover:scale-105"
+              }`}
+            >
+              {/* Icon Emoji Besar */}
+              <div className="text-[26px] mb-2 select-none">{mood.icon}</div>
+              
+              {/* Label Teks Minimalis */}
+              <span className="text-[#111] font-semibold text-[13px] leading-tight break-words max-w-full">
+                {mood.label}
+              </span>
+              
+              {/* Tanda Centang */}
+              {isSelected && (
+                <div className="absolute top-2 right-2 bg-black text-white rounded-full p-0.5 shadow-sm">
+                  <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+                    <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                  </svg>
+                </div>
+              )}
             </div>
-            
-            {/* Grid Area - Scrollable */}
-            <div className="flex-grow min-h-0 overflow-y-auto px-1.5 pb-3" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-              <style>{`.overflow-y-auto::-webkit-scrollbar { display: none; }`}</style>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
-                {moods.map((mood) => {
-                  const isSelected = selectedMoods.includes(mood.id);
-                  return (
-                    <div 
-                      key={mood.id}
-                      onClick={() => handleMoodToggle(mood.id)}
-                      className={`relative rounded-2xl overflow-hidden cursor-pointer transition-transform duration-200 aspect-[4/4.25] ${isSelected ? "scale-95" : "hover:scale-105"}`}
-                    >
-                      <img src={mood.image} alt={mood.label} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/20 flex flex-col justify-end p-3">
-                        <span className="text-white font-bold text-[15px] drop-shadow-md leading-tight">{mood.label}</span>
-                      </div>
-                      {/* Selection Overlay */}
-                      {isSelected && (
-                        <>
-                          <div className="absolute inset-0 border-[3px] border-black rounded-2xl pointer-events-none" />
-                          <div className="absolute top-3 right-3 bg-black text-white rounded-full p-1 shadow-sm">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                              <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
-                            </svg>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+          );
+        })}
+      </div>
+    </div>
 
-            {/* Bottom Sticky Action Bar */}
-            <div className="pt-3 flex-shrink-0 flex justify-center bg-white z-10 border-t border-transparent shadow-[0_-10px_20px_rgba(255,255,255,0.9)]">
-              <button 
-                disabled={selectedMoods.length < 3}
-                onClick={handleFinish} 
-                className="w-full max-w-[350px] py-3.5 rounded-full font-semibold text-[15px] transition-colors"
-                style={{
-                  backgroundColor: selectedMoods.length >= 3 ? "#e60023" : "#e9e9e9",
-                  color: selectedMoods.length >= 3 ? "white" : "#a5a5a5",
-                }}
-              >
-                {selectedMoods.length >= 3 ? "Continue" : "Pick 3 or more to continue"}
-              </button>
-            </div>
-          </div>
-        )}
+    {/* Tombol Aksi - Diubah ke mt-10 agar turun ke bawah dan tidak tabrakan */}
+    <div className="w-full max-w-[280px] mt-10 flex-shrink-0">
+      <button 
+        disabled={selectedMoods.length < 3}
+        onClick={handleFinish} 
+        className="w-full py-3.5 rounded-full font-semibold text-[15px] transition-all shadow-sm cursor-pointer disabled:cursor-not-allowed"
+        style={{
+          backgroundColor: selectedMoods.length >= 3 ? "#e60023" : "#e9e9e9",
+          color: selectedMoods.length >= 3 ? "white" : "#a5a5a5",
+        }}
+      >
+        {selectedMoods.length >= 3 ? "Continue" : "Pick 3 or more to continue"}
+      </button>
+    </div>
 
+  </div>
+)}
       </div>
     </div>
   );
