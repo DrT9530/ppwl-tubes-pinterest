@@ -71,6 +71,13 @@ export function Sidebar() {
           closeNotif();
         }
       }
+      // Klik luar untuk dropdown settings
+      if (settingsDropdownRef.current && !settingsDropdownRef.current.contains(target)) {
+        const clickedSettingsButton = (target as HTMLElement).closest("#sidebar-settings");
+        if (!clickedSettingsButton) {
+          setShowSettingsDropdown(false);
+        }
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -185,7 +192,7 @@ export function Sidebar() {
               />
             </button>
 
-            {/* PANEL DROPDOWN MELAYANG FIXED */}
+            {/* PANEL DROPDOWN MELAYANG */}
             {showMsgDropdown && (
               <div 
                 className="fixed left-[88px] top-[16px] z-[9999]"
@@ -198,16 +205,35 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* ── Bottom group: Settings ── */}
+      {/* ── Bottom group: Settings (DIPERBAIKI JADI DROPDOWN MELAYANG) ── */}
       <div className="sidebar-bottom-group">
-        <Link
-          to="/settings"
-          className="sidebar-nav-item"
-          title="Settings & support"
-          id="sidebar-settings"
-        >
-          <Settings size={24} strokeWidth={1.8} />
-        </Link>
+        <div className="relative" ref={settingsDropdownRef}>
+          <button
+            type="button"
+            id="sidebar-settings"
+            onClick={() => {
+              setShowSettingsDropdown(!showSettingsDropdown);
+              setShowMsgDropdown(false); // Tutup pesan kalau settings dibuka
+            }}
+            className={`sidebar-nav-item w-full flex items-center justify-center cursor-pointer border-0 bg-transparent transition-colors ${
+              showSettingsDropdown ? "bg-gray-100 text-[#111]" : ""
+            }`}
+            title="Settings & support"
+          >
+            <Settings 
+              size={24} 
+              strokeWidth={showSettingsDropdown ? 2.5 : 1.8} 
+            />
+          </button>
+
+          {/* PANEL SETTINGS DROPDOWN MELAYANG */}
+        {showSettingsDropdown && (
+          <div className="fixed left-[80px] top-0 h-screen z-[999]">
+            <SettingsDropdown onClose={() => setShowSettingsDropdown(false)} />
+          </div>
+        )}
+
+        </div>
       </div>
     </aside>
   );
