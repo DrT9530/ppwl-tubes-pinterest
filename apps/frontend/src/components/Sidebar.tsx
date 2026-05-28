@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { MessageDropdown } from "./MessageDropdown"; 
 import { NotificationSidebar } from "./NotificationSidebar";
+import { SettingsDropdown } from "./SettingsDropdown";
 import { useNotificationStore } from "../stores/notification.store";
 
 import {
@@ -27,6 +28,10 @@ export function Sidebar() {
   const [showNotifSidebar, setShowNotifSidebar] = useState(false);
   const [isNotifClosing, setIsNotifClosing] = useState(false);
   const notifSidebarRef = useRef<HTMLDivElement>(null);
+
+  // State dan Ref untuk Dropdown Settings
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+  const settingsDropdownRef = useRef<HTMLDivElement>(null);
 
   const closeNotif = () => {
     setIsNotifClosing(true);
@@ -135,6 +140,7 @@ export function Sidebar() {
                 } else {
                   setShowNotifSidebar(true);
                   if (showMsgDropdown) closeMsg();
+                  setShowSettingsDropdown(false);
                 }
               }}
               className={`sidebar-nav-item w-full flex items-center justify-center cursor-pointer border-0 bg-transparent transition-colors ${
@@ -178,6 +184,7 @@ export function Sidebar() {
                 } else {
                   setShowMsgDropdown(true);
                   if (showNotifSidebar) closeNotif();
+                  setShowSettingsDropdown(false);
                 }
               }}
               className={`sidebar-nav-item w-full flex items-center justify-center cursor-pointer border-0 bg-transparent transition-colors ${
@@ -214,6 +221,7 @@ export function Sidebar() {
             onClick={() => {
               setShowSettingsDropdown(!showSettingsDropdown);
               setShowMsgDropdown(false); // Tutup pesan kalau settings dibuka
+              if (showNotifSidebar) closeNotif(); // Tutup notif kalau settings dibuka
             }}
             className={`sidebar-nav-item w-full flex items-center justify-center cursor-pointer border-0 bg-transparent transition-colors ${
               showSettingsDropdown ? "bg-gray-100 text-[#111]" : ""
