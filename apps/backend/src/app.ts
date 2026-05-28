@@ -7,6 +7,7 @@ import { postRoutes } from "./modules/post";
 import { likeRoutes } from "./modules/like";
 import { commentRoutes } from "./modules/comment";
 import { notificationRoutes } from "./modules/notification";
+import { websocketRoutes } from "./modules/websocket";
 
 export const app = new Elysia()
   .use(cors())
@@ -16,5 +17,6 @@ export const app = new Elysia()
   .use(postRoutes)
   .use(likeRoutes)
   .use(commentRoutes)
-  .use(notificationRoutes);
+  .use(notificationRoutes)
+  .use(websocketRoutes);
 

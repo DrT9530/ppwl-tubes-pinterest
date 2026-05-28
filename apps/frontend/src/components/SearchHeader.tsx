@@ -4,7 +4,6 @@ import { useAuthStore } from "../stores/auth.store";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, LogOut, ChevronDown } from "lucide-react";
-import { NotificationDropdown } from "./NotificationDropdown";
 
 export function SearchHeader() {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -54,11 +53,9 @@ export function SearchHeader() {
         </div>
       </div>
 
-      {/* User Avatar & Notifications */}
+      {/* User Avatar */}
       {isAuthenticated && user && (
-        <div className="flex items-center gap-4">
-          <NotificationDropdown />
-          <div className="relative flex-shrink-0" ref={dropdownRef}>
+        <div className="relative flex-shrink-0" ref={dropdownRef}>
           <button
             className="search-header-avatar"
             onClick={() => setShowDropdown(!showDropdown)}
@@ -111,7 +108,6 @@ export function SearchHeader() {
               </div>
             </div>
           )}
-        </div>
         </div>
       )}
     </header>

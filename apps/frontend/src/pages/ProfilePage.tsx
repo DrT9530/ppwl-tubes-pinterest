@@ -7,15 +7,21 @@ import { updateProfileSchema, changePasswordSchema } from "shared/validators";
 import type { UpdateProfileInput, ChangePasswordInput } from "shared/validators";
 import { useAuthStore } from "../stores/auth.store";
 import { profileService } from "../services/profile.service";
+import { postService } from "../services/post.service";
 import { ApiError } from "../services/api";
 import toast from "react-hot-toast";
+import type { PostDTO } from "shared/types";
+import { PinCard, SkeletonCard } from "../components/PinCard";
 
 export function ProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser, setUser } = useAuthStore();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
+  const [createdPosts, setCreatedPosts] = useState<PostDTO[]>([]);
+  const [savedPosts, setSavedPosts] = useState<PostDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [postsLoading, setPostsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -24,13 +30,25 @@ export function ProfilePage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    setPostsLoading(true);
+
     profileService.getProfile(id).then((res) => {
       setProfile(res.data);
     }).catch(() => {
       toast.error("User tidak ditemukan");
       navigate("/");
     }).finally(() => setLoading(false));
-  }, [id, navigate]);
+
+    postService.getUserPosts(id).then((res) => {
+      setCreatedPosts(res.data || []);
+    }).catch(console.error).finally(() => setPostsLoading(false));
+
+    if (currentUser?.id === id) {
+      postService.getSavedPosts().then((res) => {
+        setSavedPosts(res.data || []);
+      }).catch(console.error);
+    }
+  }, [id, navigate, currentUser?.id]);
 
   const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
@@ -80,11 +98,43 @@ export function ProfilePage() {
 
       <div className="profile-tabs">
         <button className={activeTab === "posts" ? "active" : ""} onClick={() => setActiveTab("posts")}>Created</button>
-        <button className={activeTab === "saved" ? "active" : ""} onClick={() => setActiveTab("saved")}>Saved</button>
+        {isOwnProfile && (
+          <button className={activeTab === "saved" ? "active" : ""} onClick={() => setActiveTab("saved")}>Saved</button>
+        )}
       </div>
 
-      <div className="text-center py-16 text-gray-400">
-        {activeTab === "posts" ? "No pins yet" : "No saved pins yet"}
+      <div className="profile-content py-8">
+        {postsLoading ? (
+          <div className="masonry-grid">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <SkeletonCard key={i} index={i} />
+            ))}
+          </div>
+        ) : activeTab === "posts" ? (
+          createdPosts.length > 0 ? (
+            <div className="masonry-grid">
+              {createdPosts.map((post, i) => (
+                <PinCard key={post.id} post={post} index={i} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 text-gray-400">
+              No pins created yet
+            </div>
+          )
+        ) : (
+          savedPosts.length > 0 ? (
+            <div className="masonry-grid">
+              {savedPosts.map((post, i) => (
+                <PinCard key={post.id} post={post} index={i} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 text-gray-400">
+              No saved pins yet
+            </div>
+          )
+        )}
       </div>
 
       {showEditModal && (

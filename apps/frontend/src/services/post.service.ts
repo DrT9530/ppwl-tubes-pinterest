@@ -22,4 +22,13 @@ export const postService = {
 
   addComment: (id: string, content: string) =>
     api.post<ApiResponse>(`/posts/${id}/comments`, { content }),
+
+  getUserPosts: (userId: string) =>
+    api.get<ApiResponse<PostDTO[]>>(`/posts/user/${userId}`),
+
+  getSavedPosts: () =>
+    api.get<ApiResponse<PostDTO[]>>(`/posts/saved`),
+
+  toggleSave: (id: string) =>
+    api.post<ApiResponse<{ isSaved: boolean }>>(`/posts/${id}/save`),
 };
