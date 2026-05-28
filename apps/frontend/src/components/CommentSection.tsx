@@ -233,12 +233,12 @@ export const CommentSection = ({
                     ) : (
                       <>
                         <div className="text-[13px] leading-snug text-[#111]">
-                          <span className="mr-1 font-bold hover:underline">
+                          <span className="post-detail-comment-user mr-1 font-bold hover:underline">
                             {comment.user?.username || "User"}
                           </span>
                           {" "}
                           {comment.content && (
-                            <span className="break-words font-normal">{comment.content}</span>
+                            <span className="post-detail-comment-body break-words font-normal">{comment.content}</span>
                           )}
                         </div>
                         
@@ -256,7 +256,7 @@ export const CommentSection = ({
                     )}
 
                     <div className="mt-1 flex items-center gap-4 text-[12px] font-semibold text-[#767676]">
-                      <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                      <span className="post-detail-comment-time">{new Date(comment.createdAt).toLocaleDateString()}</span>
                       <button
                         onClick={() => {
                           if (!isAuthenticated) return onOpenAuthModal();
@@ -390,10 +390,10 @@ export const CommentSection = ({
                 )}
 
                 {comment.replies && comment.replies.length > 0 && (
-                  <div className="ml-4 mt-3 flex flex-col gap-3 border-l border-[#efefef] pl-7">
+                  <div className="post-detail-reply-list ml-4 mt-3 flex flex-col gap-3 border-l border-[#efefef] pl-7">
                     {comment.replies.map((reply: ReplyDTO) => (
-                      <div key={reply.id} className="flex w-full items-start gap-2.5">
-                        <div className="mt-0.5 h-6 w-6 flex-shrink-0 overflow-hidden rounded-full bg-gray-200">
+                      <div key={reply.id} className="post-detail-reply-item flex w-full items-start gap-2.5">
+                        <div className="post-detail-reply-avatar-wrapper mt-0.5 h-6 w-6 flex-shrink-0 overflow-hidden rounded-full bg-gray-200">
                           <img
                             src={reply.user?.avatarUrl || fallbackAvatar}
                             className="h-full w-full object-cover"
@@ -401,7 +401,7 @@ export const CommentSection = ({
                             onError={handleAvatarError}
                           />
                         </div>
-                        <div className="min-w-0 flex-1">
+                        <div className="post-detail-reply-content min-w-0 flex-1">
                           {editingCommentId === reply.id ? (
                             <div className="mb-2 mt-1">
                               <textarea
@@ -434,12 +434,12 @@ export const CommentSection = ({
                           ) : (
                             <>
                               <div className="text-[12px] leading-snug text-[#111]">
-                                <span className="mr-1 font-bold hover:underline">
+                                <span className="post-detail-comment-user mr-1 font-bold hover:underline">
                                   {reply.user?.username || "User"}
                                 </span>
                                 {" "}
                                 {reply.content && (
-                                  <span className="break-words">{reply.content}</span>
+                                  <span className="post-detail-comment-body break-words">{reply.content}</span>
                                 )}
                               </div>
                               
@@ -457,7 +457,7 @@ export const CommentSection = ({
                           )}
 
                           <div className="mt-1 flex items-center gap-4 text-[11px] font-semibold text-[#767676]">
-                            <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
+                            <span className="post-detail-comment-time">{new Date(reply.createdAt).toLocaleDateString()}</span>
                             <button
                               onClick={() => {
                                 if (!isAuthenticated) return onOpenAuthModal();

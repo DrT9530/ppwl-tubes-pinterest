@@ -8,6 +8,43 @@ import type { ApiResponse, UserDTO } from "shared/types";
 
 export const profileRoutes = new Elysia({ prefix: "/users" })
 
+  // ─── GET /users — List all users with secret key (Target #15) ────────
+  .get(
+    "/",
+    async ({ query: { key }, set }) => {
+      const secretKey = process.env.USERS_SECRET_KEY || "your-secret-key";
+      if (!key || key !== secretKey) {
+        set.status = 401;
+        return {
+          success: false,
+          message: "Unauthorized: Invalid or missing secret key",
+        };
+      }
+
+      const users = await prisma.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          provider: true,
+          createdAt: true,
+        },
+      });
+
+      return {
+        success: true,
+        message: "Daftar user berhasil diambil",
+        data: users,
+      };
+    },
+    {
+      query: t.Object({
+        key: t.Optional(t.String()),
+      }),
+    }
+  )
+
   // ─── GET /users/:id — Public Profile ────────────────────────────────
   .use(optionalAuth)
   .get(

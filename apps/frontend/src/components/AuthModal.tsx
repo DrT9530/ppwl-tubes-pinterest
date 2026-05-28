@@ -1,5 +1,6 @@
 // components/AuthModal.tsx — Login/Register modal popup over landing page
 import { useState, useEffect } from "react";
+import pionterestLogo from "../assets/Pionterest.png";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, X } from "lucide-react";
@@ -120,10 +121,8 @@ function LoginForm({
   return (
     <>
       <div className="logo-section">
-        <svg viewBox="0 0 24 24" fill="currentColor" className="logo-icon">
-          <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
-        </svg>
-        <h1 style={{ fontSize: "32px", fontWeight: 600, letterSpacing: "-1.2px", marginBottom: "22px" }}>Welcome to Pinterest</h1>
+        <img src={pionterestLogo} alt="Pionterest" style={{ width: "45px", height: "45px", marginBottom: "8px", objectFit: "contain" }} />
+        <h1 style={{ fontSize: "32px", fontWeight: 600, letterSpacing: "-1.2px", marginBottom: "22px" }}>Welcome to Pionterest</h1>
       </div>
 
       <div style={{ width: "100%", maxWidth: "400px", margin: "0 auto" }}>
@@ -195,7 +194,7 @@ function LoginForm({
         </form>
 
         <div className="auth-footer" style={{ marginTop: "32px", color: "var(--color-text-primary)", fontWeight: "normal" }}>
-          Not on Pinterest yet?{" "}
+          Not on Pionterest yet?{" "}
           <button type="button" className="auth-link-btn" onClick={() => onSwitchMode("register")} style={{ color: "var(--color-text-primary)", fontWeight: 600 }}>
             Sign up
           </button>
@@ -247,10 +246,8 @@ function RegisterForm({
   return (
     <>
       <div className="logo-section">
-        <svg viewBox="0 0 24 24" fill="currentColor" className="logo-icon" style={{ width: "45px", height: "45px", marginBottom: "8px" }}>
-          <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
-        </svg>
-        <h1 style={{ fontSize: "32px", fontWeight: 600, letterSpacing: "-1.2px", marginBottom: "2px" }}>Welcome to Pinterest</h1>
+        <img src={pionterestLogo} alt="Pionterest" style={{ width: "45px", height: "45px", marginBottom: "8px", objectFit: "contain" }} />
+        <h1 style={{ fontSize: "32px", fontWeight: 600, letterSpacing: "-1.2px", marginBottom: "2px" }}>Welcome to Pionterest</h1>
         <p className="subtitle" style={{ color: "var(--color-text-primary)", width: "270px", margin: "0 auto 22px" }}>Find new ideas to try</p>
       </div>
 
@@ -323,7 +320,7 @@ function RegisterForm({
         </form>
 
         <p className="auth-modal-legal" style={{ marginTop: "16px", marginBottom: "8px" }}>
-          By continuing, you agree to Pinterest's <a href="#">Terms of Service</a> and acknowledge you've read our <a href="#">Privacy Policy</a>. <a href="#">Notice at collection</a>.
+          By continuing, you agree to Pionterest's <a href="#">Terms of Service</a> and acknowledge you've read our <a href="#">Privacy Policy</a>. <a href="#">Notice at collection</a>.
         </p>
 
         <div className="auth-footer" style={{ marginTop: "16px", color: "var(--color-text-primary)", fontWeight: "normal" }}>
@@ -367,10 +364,8 @@ export function InlineSignupForm() {
   return (
     <div className="inline-signup-card" id="inline-signup-form">
       <div className="logo-section">
-        <svg viewBox="0 0 24 24" fill="currentColor" className="logo-icon">
-          <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
-        </svg>
-        <h2 style={{ fontSize: "24px", fontWeight: 700 }}>Welcome to Pinterest</h2>
+        <img src={pionterestLogo} alt="Pionterest" style={{ width: "45px", height: "45px", marginBottom: "8px", objectFit: "contain" }} />
+        <h2 style={{ fontSize: "24px", fontWeight: 700 }}>Welcome to Pionterest</h2>
         <p className="subtitle">Find new ideas to try</p>
       </div>
 
@@ -439,7 +434,7 @@ export function InlineSignupForm() {
       </form>
 
       <p className="auth-modal-legal">
-        By continuing, you agree to Pinterest's <a href="#">Terms of Service</a> and acknowledge you've read our <a href="#">Privacy Policy</a>.
+        By continuing, you agree to Pionterest's <a href="#">Terms of Service</a> and acknowledge you've read our <a href="#">Privacy Policy</a>.
       </p>
     </div>
   );

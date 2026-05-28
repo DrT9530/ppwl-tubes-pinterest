@@ -11,8 +11,11 @@ export const postService = {
   getById: (id: string) =>
     api.get<ApiResponse<PostDTO & { comments: any[] }>>(`/posts/${id}`),
 
-  create: (data: FormData) =>
-    api.upload<ApiResponse<PostDTO>>("/posts", data),
+  getUploadSignature: () =>
+    api.get<ApiResponse<{ signature: string; timestamp: number; apiKey: string; folder: string; cloudName: string }>>("/posts/upload-signature"),
+
+  create: (data: { imageUrl: string; caption?: string }) =>
+    api.post<ApiResponse<PostDTO>>("/posts", data),
 
   update: (id: string, data: { caption?: string }) =>
     api.patch<ApiResponse>(`/posts/${id}`, data),

@@ -11,6 +11,8 @@ import { LandingPage } from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import PostDetailPage from "./pages/PostDetailPage"; 
+import TodayPage from "./pages/TodayPage";
+import TodayCategoryPage from "./pages/TodayCategoryPage";
 import { useAuthStore } from "./stores/auth.store";
 
 const queryClient = new QueryClient({
@@ -95,6 +97,19 @@ function AppContent() {
         <Route path="/post/:id" element={
           <MainLayout>
             <PostDetailPage />
+          </MainLayout>
+        } />
+
+        {/* Route Today (Explore) */}
+        <Route path="/today" element={
+          <MainLayout>
+            <TodayPage />
+          </MainLayout>
+        } />
+        
+        <Route path="/today/:categorySlug" element={
+          <MainLayout>
+            <TodayCategoryPage />
           </MainLayout>
         } />
 

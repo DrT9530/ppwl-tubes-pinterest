@@ -5,7 +5,9 @@ import {
   Check,
   ChevronDown,
   Maximize2,
+  Minus,
   MoreHorizontal,
+  Plus,
   Search,
   Upload,
   X,
@@ -47,6 +49,14 @@ export default function PostDetailPage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [localIsLiked, setLocalIsLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+
+  useEffect(() => {
+    if (!isExpanded) {
+      setZoomScale(1);
+    }
+  }, [isExpanded]);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["post", id],
@@ -223,12 +233,12 @@ export default function PostDetailPage() {
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-[1800px] flex-col items-center gap-10 px-4 pb-16 pt-6 sm:px-6 md:px-8">
+    <div className="post-detail-page-container mx-auto flex w-full max-w-[1800px] flex-col items-center gap-10 px-4 sm:px-6 md:px-8">
       {/* Top Section: Main Card + Sidebar */}
       <div className="flex w-full items-start justify-center gap-6 max-[1180px]:flex-col max-[1180px]:items-center">
         {/* Main Detail Card */}
         <section className="w-full max-w-[1016px] flex-1 min-w-0 rounded-[24px] border border-[#efefef] bg-white shadow-[0_1px_20px_rgba(0,0,0,0.05)] overflow-hidden flex-shrink-0">
-        <div className="grid min-h-[500px] lg:max-h-[calc(100vh-140px)] grid-cols-1 lg:grid-cols-2">
+        <div className="grid min-h-[500px] lg:h-[calc(100vh-140px)] grid-cols-1 lg:grid-cols-2">
           {/* Image Section */}
           <div className="relative flex items-center justify-center bg-white lg:rounded-l-[24px] lg:h-full overflow-hidden lg:border-r border-[#efefef] lg:p-4">
             <button
@@ -243,7 +253,7 @@ export default function PostDetailPage() {
               <img
                 src={post.imageUrl}
                 alt={post.caption || "Pin image"}
-                className="h-full w-full max-h-[85vh] object-contain max-lg:max-h-[72vh]"
+                className="h-full w-full lg:max-h-full object-contain max-lg:max-h-[72vh]"
               />
 
               <div className="absolute bottom-4 left-4 rounded-full bg-black/55 px-3 py-1.5 text-[13px] font-semibold text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
@@ -252,6 +262,7 @@ export default function PostDetailPage() {
 
               <div className="absolute bottom-4 right-4 flex flex-col gap-3">
                 <button
+                  onClick={() => setIsExpanded(true)}
                   className="flex h-11 w-11 items-center justify-center rounded-full bg-white/85 text-[#111] shadow-[0_2px_10px_rgba(0,0,0,0.16)] backdrop-blur transition hover:scale-105 hover:bg-white active:scale-95"
                   title="Expand"
                 >
@@ -268,9 +279,9 @@ export default function PostDetailPage() {
           </div>
 
           <aside className="relative min-w-0 lg:min-h-[500px] max-lg:flex max-lg:flex-col lg:h-full rounded-r-[24px]">
-            <div className="lg:absolute lg:inset-0 flex flex-col max-lg:relative max-lg:h-auto lg:h-full w-full overflow-hidden">
+            <div className="post-detail-aside-content lg:absolute lg:inset-0 flex flex-col max-lg:relative max-lg:h-auto lg:h-full w-full overflow-hidden">
               <div className="flex-none px-8 pt-8 lg:pl-10 lg:pr-8 max-lg:px-4 max-lg:pt-4">
-                <div className="mb-6 flex items-center justify-between gap-4 max-sm:flex-wrap">
+                <div className="post-detail-actions-bar flex items-center justify-between gap-4 max-sm:flex-wrap">
               <div className="flex items-center gap-3 sm:gap-4">
                 <LikeButton
                   postId={post.id}
@@ -300,10 +311,7 @@ export default function PostDetailPage() {
                   </button>
 
                   {showDropdown && (
-                    <div className="absolute left-0 top-full z-30 mt-2 w-[280px] rounded-[16px] border border-gray-100 bg-white p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
-                      <div className="px-3 py-2 text-[12px] font-bold uppercase tracking-wide text-[#767676]">
-                        Opsi Pin
-                      </div>
+                    <div className="post-detail-dropdown">
                       {isOwner && (
                         <>
                           <button
@@ -312,48 +320,45 @@ export default function PostDetailPage() {
                               setIsEditingCaption(true);
                               setShowDropdown(false);
                             }}
-                            className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1]"
+                            className="post-detail-dropdown-item"
                           >
                             Edit Pin
                           </button>
                           <button
                             type="button"
                             onClick={handleDeletePin}
-                            className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#cc0000] transition-colors hover:bg-[#fff0f0] disabled:opacity-60"
+                            className="post-detail-dropdown-item post-detail-dropdown-item-danger"
                             disabled={deletePost.isPending}
                           >
                             Hapus Pin
                           </button>
+                          <div
+                            className="post-detail-dropdown-toggle-row"
+                            onClick={() => setAllowComments((prev) => !prev)}
+                          >
+                            <span>Izinkan komentar</span>
+                            <button
+                              type="button"
+                              className="post-detail-dropdown-toggle-switch"
+                              style={{ backgroundColor: allowComments ? "#0066f5" : "#cdcdcd" }}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setAllowComments((prev) => !prev);
+                              }}
+                            >
+                              <span
+                                className="post-detail-dropdown-toggle-circle"
+                                style={{ left: allowComments ? "22px" : "2px" }}
+                              />
+                            </button>
+                          </div>
                         </>
                       )}
-
-                      <div
-                        className="flex w-full cursor-pointer items-center justify-between gap-4 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1]"
-                        onClick={() => setAllowComments((prev) => !prev)}
-                      >
-                        <span>Izinkan komentar</span>
-                        <button
-                          type="button"
-                          className={`relative h-6 w-11 rounded-full p-1 transition-all duration-300 ${
-                            allowComments ? "bg-[#0fa573]" : "bg-[#cdcdcd]"
-                          }`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setAllowComments((prev) => !prev);
-                          }}
-                        >
-                          <span
-                            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-300 ${
-                              allowComments ? "left-[22px]" : "left-0.5"
-                            }`}
-                          />
-                        </button>
-                      </div>
 
                       <button
                         type="button"
                         onClick={handleDownload}
-                        className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1]"
+                        className="post-detail-dropdown-item"
                       >
                         Unduh gambar
                       </button>
@@ -363,14 +368,14 @@ export default function PostDetailPage() {
                           toast.success("Berhasil ditambahkan ke kolase");
                           setShowDropdown(false);
                         }}
-                        className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1]"
+                        className="post-detail-dropdown-item"
                       >
                         Tambahkan ke kolase
                       </button>
                       <button
                         type="button"
                         onClick={handleCopyEmbed}
-                        className="w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1]"
+                        className="post-detail-dropdown-item"
                       >
                         Dapatkan kode sisipan pin
                       </button>
@@ -384,13 +389,14 @@ export default function PostDetailPage() {
                   Profil
                   <ChevronDown size={16} strokeWidth={2.2} />
                 </button>
-                <button className="flex h-12 min-w-[94px] items-center justify-center rounded-full bg-[#e60023] px-5 text-[16px] font-semibold text-white transition-colors hover:bg-[#b6001a]">
+                 <button className="post-detail-save-btn flex h-12 min-w-[94px] items-center justify-center rounded-full bg-[#e60023] px-5 text-[16px] font-semibold text-white transition-colors hover:bg-[#b6001a]">
                   Simpan
                 </button>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center justify-between gap-4 pb-5">
+            <div className="post-detail-creator-row flex items-center justify-between gap-4">
               <Link
                 to={`/profile/${post.creator.id}`}
                 className="group flex min-w-0 items-center gap-3"
@@ -408,13 +414,13 @@ export default function PostDetailPage() {
                     {creatorInitials}
                   </div>
                 )}
-                <span className="truncate text-[16px] font-normal text-[#111] group-hover:underline">
+                <span className="post-detail-creator-name truncate text-[16px] font-normal text-[#111] group-hover:underline">
                   {post.creator.username}
                 </span>
               </Link>
             </div>
 
-            <div className="mb-5">
+            <div className="post-detail-caption-box">
               {isEditingCaption ? (
                 <div>
                   <textarea
@@ -452,7 +458,7 @@ export default function PostDetailPage() {
                   </div>
                 </div>
               ) : post.caption ? (
-                <h1 className="text-[28px] font-bold leading-tight text-[#111]">
+                <h1 className="post-detail-title text-[28px] font-bold leading-tight text-[#111]">
                   {post.caption}
                 </h1>
               ) : isOwner ? (
@@ -467,10 +473,10 @@ export default function PostDetailPage() {
             </div>
 
             {/* Garis Horizontal pembatas - Ubah "h-[1px]" untuk mengatur ketebalan garis */}
-            <hr className="h-[1px] w-full border-0 bg-[#efefef] mb-5" />
+            <hr className="post-detail-divider h-[1px] w-full border-0 bg-[#efefef]" />
             <div className="flex flex-col">
               <div className="mb-4 flex items-center justify-between gap-4">
-                <h2 className="text-[20px] font-bold text-[#111]">
+                <h2 className="post-detail-comment-header text-[20px] font-bold text-[#111]">
                   {post.commentCount > 0
                     ? `${post.commentCount} Komentar`
                     : "Komentar"}
@@ -480,18 +486,17 @@ export default function PostDetailPage() {
                 </button>
               </div>
             </div>
+            <CommentSection
+              postId={post.id}
+              postOwnerId={post.creator.id}
+              comments={post.comments || []}
+              onOpenAuthModal={() => {}}
+              allowComments={allowComments}
+            />
           </div>
-          <CommentSection
-            postId={post.id}
-            postOwnerId={post.creator.id}
-            comments={post.comments || []}
-            onOpenAuthModal={() => {}}
-            allowComments={allowComments}
-          />
-        </div>
-      </aside>
-    </div>
-  </section>
+        </aside>
+      </div>
+    </section>
 
         {/* Sidebar Recommendations (Desktop Only) */}
         {sidebarPosts.length > 0 && (
@@ -516,6 +521,86 @@ export default function PostDetailPage() {
           {relatedPosts.map(renderRelatedPost)}
         </div>
       </section>
+
+      {/* Full-Screen Lightbox Modal for Pin Expansion */}
+      {isExpanded && (
+        <div className="pin-lightbox-overlay" onClick={() => setIsExpanded(false)}>
+          {/* Top Header Row */}
+          <div className="pin-lightbox-header" onClick={(e) => e.stopPropagation()}>
+            {/* Left Close Button */}
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="pin-lightbox-close-btn"
+              title="Tutup"
+            >
+              <X size={24} strokeWidth={2.5} />
+            </button>
+
+            {/* Right Action Buttons */}
+            <div className="pin-lightbox-actions">
+              <button className="pin-lightbox-share-btn" onClick={handleCopyEmbed}>
+                Bagikan
+                <Upload size={16} strokeWidth={2.3} className="ml-1.5 inline-block" />
+              </button>
+              
+              <button className="pin-lightbox-profile-btn" onClick={() => navigate(`/profile/${post.creator.id}`)}>
+                Profil
+                <ChevronDown size={14} strokeWidth={2.2} className="ml-1 inline-block" />
+              </button>
+
+              <button className="pin-lightbox-save-btn">
+                Simpan
+              </button>
+            </div>
+          </div>
+
+          {/* Central Image Container */}
+          <div className="pin-lightbox-content" onClick={() => setIsExpanded(false)}>
+            <div 
+              className="pin-lightbox-image-wrapper"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={post.imageUrl}
+                alt={post.caption || "Expanded pin"}
+                className="pin-lightbox-image"
+                style={{ transform: `scale(${zoomScale})` }}
+              />
+
+              {/* Visual Search Button - only visible at normal zoom (scale 1) */}
+              {zoomScale === 1 && (
+                <button 
+                  className="pin-lightbox-search-btn"
+                  title="Cari gambar"
+                >
+                  Cari gambar <Search size={16} strokeWidth={2.5} className="ml-1.5 inline-block" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Floating Zoom Controls in bottom-right of the screen */}
+          <div 
+            className="pin-lightbox-zoom-controls"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setZoomScale(prev => Math.min(3, prev + 0.2))}
+              className="pin-lightbox-zoom-btn"
+              title="Perbesar"
+            >
+              <Plus size={22} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={() => setZoomScale(prev => Math.max(0.5, prev - 0.2))}
+              className="pin-lightbox-zoom-btn"
+              title="Perkecil"
+            >
+              <Minus size={22} strokeWidth={2.5} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
