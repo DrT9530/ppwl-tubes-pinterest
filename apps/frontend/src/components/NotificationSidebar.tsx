@@ -6,9 +6,9 @@ import { notificationService } from "../services/notification.service";
 import { useNotificationStore } from "../stores/notification.store";
 import type { NotificationDTO } from "shared/types";
 
-export function NotificationSidebar({}: { onClose: () => void }) {
+export function NotificationSidebar({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
-  const { unreadCount, setUnreadCount, reset } = useNotificationStore();
+  const { reset } = useNotificationStore();
 
   const { data, isLoading } = useQuery({
     queryKey: ["notifications"],
@@ -24,66 +24,37 @@ export function NotificationSidebar({}: { onClose: () => void }) {
   });
 
   useEffect(() => {
-    if (unreadCount > 0) {
-      setTimeout(() => markAllRead(), 1500);
-    }
-  }, [unreadCount, markAllRead]);
-
-  useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    if (!token) return;
-
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const wsUrl = apiUrl.replace(/^http/, 'ws');
-    const ws = new WebSocket(`${wsUrl}/ws/notifications?token=${token}`);
-
-    ws.onopen = () => {
-      console.log("[WS] Connected to notification server");
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "NEW_NOTIFICATION") {
-          const newNotif = data.payload;
-          queryClient.setQueryData(["notifications"], (oldData: any) => {
-            if (!oldData) return { data: [newNotif] };
-            return {
-              ...oldData,
-              data: [newNotif, ...oldData.data]
-            };
-          });
-          setUnreadCount(useNotificationStore.getState().unreadCount + 1);
-        }
-      } catch (err) {
-        console.error("WS Message Error", err);
-      }
-    };
-
-    ws.onerror = (err) => {
-      console.error("[WS] Error:", err);
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [queryClient, setUnreadCount]);
+    markAllRead();
+  }, [markAllRead]);
 
   const notifications: NotificationDTO[] = data?.data ?? [];
 
   return (
-    <div className="flex flex-col w-[360px] h-[calc(100vh-32px)] bg-white shadow-[8px_0_24px_rgba(0,0,0,0.08)] overflow-hidden animate-in fade-in slide-in-from-left-4 duration-300 rounded-[24px] border border-[#efefef]">
+    <div className="notif-panel-container">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-8 pb-2">
-        <h2 className="text-[28px] font-semibold text-[#111]">Pembaruan</h2>
+      <div className="notif-panel-header">
+        <h2 className="notif-panel-title">Pembaruan</h2>
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }} 
+          className="notif-panel-close-btn"
+          title="Tutup"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-[20px] h-[20px]" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
 
-      <div className="px-6 py-4 flex items-center justify-between">
-        <h3 className="text-[16px] font-semibold text-[#111]">Dilihat</h3>
+      <div className="notif-panel-section-bar">
+        <h3 className="notif-panel-section-title">Dilihat</h3>
         {notifications.some((n) => !n.read) && (
           <button
             onClick={() => markAllRead()}
-            className="text-[14px] font-medium text-[#e60023] hover:underline"
+            className="notif-panel-mark-read-btn"
           >
             Tandai semua dibaca
           </button>
@@ -91,7 +62,7 @@ export function NotificationSidebar({}: { onClose: () => void }) {
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto px-4 pb-6">
+      <div className="notif-panel-list scrollbar-hide">
         {isLoading ? (
           <div className="p-4 space-y-4">
             {[...Array(5)].map((_, i) => (
@@ -129,27 +100,25 @@ function NotifItem({ notif }: { notif: NotificationDTO }) {
 
   return (
     <div
-      className={`flex items-start gap-3 p-3 rounded-2xl hover:bg-[#f5f5f5] transition-colors cursor-pointer ${
-        !notif.read ? "bg-[#f1f1f1]" : ""
-      }`}
+      className={`notif-item-container ${!notif.read ? "unread" : ""}`}
     >
       <div className="relative flex-shrink-0 mt-1">
         <img
           src={notif.actor?.avatarUrl ?? `https://ui-avatars.com/api/?name=${notif.actor?.username ?? "?"}&background=e60023&color=fff`}
           alt={notif.actor?.username}
-          className="w-12 h-12 rounded-full object-cover"
+          className="notif-item-avatar"
         />
-        <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-white shadow border border-gray-100">
+        <span className="notif-item-badge">
           {notif.type === "LIKE" ? "❤️" : notif.type === "COMMENT" ? "💬" : "↩️"}
         </span>
       </div>
 
-      <div className="flex-1 min-w-0 pr-2">
-        <p className="text-[15px] text-[#111] leading-snug">
-          <span className="font-bold">{notif.actor?.username ?? "Seseorang"}</span>{" "}
-          <span className="font-normal text-[#111]">{label}</span>
+      <div className="notif-item-content">
+        <p className="notif-item-text">
+          <span className="notif-item-actor">{notif.actor?.username ?? "Seseorang"}</span>{" "}
+          <span className="notif-item-label">{label}</span>
         </p>
-        <p className="text-[13px] text-[#767676] mt-1">
+        <p className="notif-item-time">
           {formatDistanceToNow(new Date(notif.createdAt), {
             addSuffix: true,
             locale: localeId,
@@ -161,12 +130,12 @@ function NotifItem({ notif }: { notif: NotificationDTO }) {
         <img
           src={(notif as any).post.imageUrl}
           alt="post"
-          className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-gray-100"
+          className="notif-item-thumbnail"
         />
       )}
 
       {!notif.read && (
-        <span className="w-2.5 h-2.5 rounded-full bg-[#E60023] flex-shrink-0 self-center ml-1" />
+        <span className="notif-item-unread-dot" />
       )}
     </div>
   );

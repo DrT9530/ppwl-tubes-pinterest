@@ -4,6 +4,7 @@ import { prisma } from "../../lib/prisma";
 import {
   deleteImageFromCloudinary,
   uploadImageToCloudinary,
+  getCloudinaryUploadSignature,
 } from "../../lib/cloudinary";
 import { authGuard, optionalAuth } from "../../middleware/auth";
 import type { ApiResponse, PostDTO, PaginatedResponse } from "shared/types";
@@ -273,6 +274,27 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
   // ─── POST /posts — Create Post ─────────────────────────────────────
   .use(authGuard)
 
+  // ─── GET /posts/upload-signature — Request Signed Upload Params ───────
+  .get(
+    "/upload-signature",
+    async ({ set }) => {
+      try {
+        const credentials = getCloudinaryUploadSignature();
+        return {
+          success: true,
+          message: "Signature berhasil dibuat",
+          data: credentials,
+        };
+      } catch (error) {
+        set.status = 500;
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : "Gagal membuat signature",
+        };
+      }
+    }
+  )
+
   // ─── GET /posts/saved — User's Saved Posts ─────────────────────────
   .get(
     "/saved",
@@ -394,21 +416,13 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         };
       }
 
-      const { image, caption } = body as any;
+      const { imageUrl, caption } = body as { imageUrl: string; caption?: string };
 
-      if (!image || !(image instanceof File)) {
+      if (!imageUrl || typeof imageUrl !== "string") {
         set.status = 400;
         return {
           success: false,
-          message: "File gambar wajib diunggah",
-        };
-      }
-
-      if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
-        set.status = 400;
-        return {
-          success: false,
-          message: "File harus berupa gambar JPG, PNG, WEBP, atau GIF",
+          message: "URL gambar wajib diisi",
         };
       }
 
@@ -417,22 +431,6 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         return {
           success: false,
           message: "Caption maksimal 500 karakter",
-        };
-      }
-
-      let imageUrl: string;
-
-      try {
-        const uploaded = await uploadImageToCloudinary(image);
-        imageUrl = uploaded.imageUrl;
-      } catch (error) {
-        set.status = 500;
-        return {
-          success: false,
-          message:
-            error instanceof Error
-              ? error.message
-              : "Gagal upload gambar ke Cloudinary",
         };
       }
 
@@ -472,6 +470,12 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
           createdAt: post.createdAt.toISOString(),
         },
       };
+    },
+    {
+      body: t.Object({
+        imageUrl: t.String(),
+        caption: t.Optional(t.String()),
+      }),
     }
   )
 

@@ -720,7 +720,7 @@ body {
 
 /* ─── Pin More Menu (Three-dots dropdown) ─────────────────────────── */
 .pin-more-menu {
-  position: fixed;
+  position: absolute;
   width: 236px;
   background-color: #fff;
   border-radius: 16px;
@@ -803,8 +803,173 @@ body {
   .masonry-grid { columns: 2; }
 }
 
-@media (max-width: 500px) {
-  .masonry-grid { columns: 1; }
+@media (max-width: 768px) {
+  /* 1. Reset Grid to 2 Columns & Compact Gaps */
+  .masonry-grid {
+    columns: 2 !important;
+    column-gap: 12px !important;
+  }
+  
+  .masonry-feed-container {
+    padding: 8px 8px 32px !important;
+  }
+  
+  /* 2. Responsive Card Images (Aspect-Ratio based) */
+  .pin-card {
+    margin-bottom: 12px !important;
+  }
+  
+  .pin-card-image-wrapper img {
+    height: auto !important; /* Force natural aspect ratio heights on mobile */
+    border-radius: 16px !important;
+  }
+  
+  /* 3. Restore Vertical Sidebar on Left (SS3 style) */
+  .sidebar-logo {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: var(--radius-full) !important;
+    color: var(--color-pinterest-red) !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    width: 72px !important;
+    height: 100vh !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 16px 0 20px !important;
+    background-color: var(--color-surface) !important;
+    border-right: 1px solid var(--color-border-light) !important;
+    border-top: none !important;
+    box-shadow: none !important;
+    z-index: 1000 !important;
+  }
+  
+  .sidebar-top-group {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+  
+  .sidebar-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 20px !important;
+  }
+  
+  .sidebar-bottom-group {
+    display: flex !important; /* Show settings dropdown vertically at bottom */
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+  
+  .sidebar-nav-item {
+    width: 48px !important;
+    height: 48px !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* 4. Push Main Content to Right (Prevent Overlap) */
+  .app-layout .app-main {
+    margin-left: 72px !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* 5. Mobile Search Header Optimization */
+  .search-header {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+  
+  .search-header-bar {
+    height: 38px !important;
+  }
+  
+  .search-header-input {
+    height: 38px !important;
+    font-size: 14px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    padding-right: 16px !important; /* No action buttons padding needed */
+  }
+  
+  .search-header-actions {
+    display: none !important; /* Hide camera and mic on mobile for cleaner Pinterest look */
+  }
+  
+  /* 6. Optimasi Menu Notifikasi di Mobile (Float next to Sidebar) */
+  .fixed.left-\[72px\] {
+    left: 72px !important;
+    right: 8px !important;
+    top: 16px !important;
+    bottom: 16px !important;
+    height: calc(100vh - 32px) !important;
+    width: auto !important;
+    padding: 0 !important;
+  }
+  
+  .notif-panel-container {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 24px !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+  }
+  
+  /* 7. Optimasi Inbox/Pesan di Mobile (Float next to Sidebar) */
+  .fixed.left-\[88px\] {
+    left: 72px !important;
+    right: 8px !important;
+    top: 16px !important;
+    bottom: 16px !important;
+    height: calc(100vh - 32px) !important;
+    width: auto !important;
+    padding: 0 !important;
+  }
+  
+  .message-panel-container {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 24px !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+  }
+  
+  /* 8. Optimasi Settings Dropdown di Mobile (Float next to Sidebar) */
+  .fixed.left-\[80px\] {
+    left: 72px !important;
+    right: 8px !important;
+    top: 16px !important;
+    bottom: 16px !important;
+    height: calc(100vh - 32px) !important;
+    width: auto !important;
+    padding: 0 !important;
+  }
+  
+  .settings-panel-container {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 24px !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+  }
 }
 
 /* ─── Search Header ───────────────────────────────────────────────── */
@@ -1945,4 +2110,1469 @@ body {
     padding: 24px;
     animation: slide-up 0.3s ease-out;
   }
+}
+
+/* ==========================================================================
+   ─── Today Page Spacing & Layout Customizations ───
+   ========================================================================== */
+
+/* Container utama halaman "Today". 
+   Gunakan padding di sini untuk menambah/mengurangi jarak dari Search Header, tepi layar, dan batas bawah halaman. */
+.today-page-container {
+  padding-top: 32px !important; /* Jarak atas dari Search Header ke Tanggal (Silakan ubah secara manual) */
+  padding-left: 16px !important; /* Jarak aman tepi kiri layar untuk mobile */
+  padding-right: 16px !important; /* Jarak aman tepi kanan layar untuk mobile */
+  padding-bottom: 64px !important; /* Jarak bawah halaman */
+}
+
+@media (min-width: 640px) {
+  .today-page-container {
+    padding-left: 32px !important; /* Jarak aman tepi kiri layar untuk desktop */
+    padding-right: 32px !important; /* Jarak aman tepi kanan layar untuk desktop */
+  }
+}
+
+/* Bagian header pembungkus (berisi tanggal + judul "Dapatkan inspirasi").
+   Gunakan margin-bottom di sini untuk mengatur jarak ke grid kartu kategori di bawahnya. */
+.today-page-header {
+  margin-bottom: 32px !important; /* Jarak bawah dari judul "Dapatkan inspirasi" ke Grid Kartu Kategori (Silakan ubah secara manual) */
+  text-align: center;
+  width: 100%;
+}
+
+/* Teks tanggal di halaman Today (misal: "28 Mei 2026") */
+.today-page-date {
+  font-size: 18px !important; /* Ukuran font tanggal (Silakan ubah secara manual) */
+  font-weight: 500 !important; /* Ketebalan font */
+  color: #767676 !important; /* Warna abu-abu Pinterest */
+  margin-bottom: 4px !important; /* Jarak bawah dari Tanggal ke Judul (Silakan ubah secara manual) */
+}
+
+/* Judul utama halaman Today ("Dapatkan inspirasi") */
+.today-page-title {
+  font-size: 36px !important; /* Ukuran font judul (desktop) (Silakan ubah secara manual) */
+  font-weight: 700 !important; /* Ketebalan font judul */
+  color: #111111 !important; /* Warna hitam legam Pinterest */
+  line-height: 1.2 !important; /* Spasi baris */
+  margin-top: 0px !important;
+  margin-bottom: 0px !important;
+}
+
+@media (max-width: 640px) {
+  .today-page-title {
+    font-size: 28px !important; /* Ukuran font judul pada layar mobile (Silakan ubah secara manual) */
+  }
+}
+
+/* Judul kategori di dalam masing-masing kartu (misal: "Adha greeting") */
+.today-card-title {
+  font-size: 28px !important; /* Ukuran font judul kartu (desktop) (Silakan ubah secara manual) */
+  font-weight: 600 !important; /* Ketebalan huruf */
+  color: #ffffff !important; /* Warna teks putih agar kontras di atas gambar */
+  line-height: 1.25 !important;
+  text-align: center;
+  text-shadow: 0px 2px 6px rgba(0, 0, 0, 0.7) !important; /* Efek drop shadow agar teks sangat mudah dibaca */
+}
+
+@media (max-width: 640px) {
+  .today-card-title {
+    font-size: 20px !important; /* Ukuran font judul kartu pada layar mobile (Silakan ubah secara manual) */
+  }
+}
+
+/* Container pembungkus teks judul di dalam masing-masing kartu 
+   Gunakan padding di sini untuk mengatur jarak aman teks dari tepi kartu (tepi bawah, kiri, dan kanan). */
+.today-card-text-container {
+  padding: 24px !important; /* Jarak aman teks dari sudut/tepi kartu (Silakan ubah secara manual) */
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-end !important; /* Mendorong teks ke bagian bawah kartu */
+  text-align: center !important;
+  height: 100% !important;
+}
+
+/* Barisan/Grid Kartu Kategori di halaman Today 
+   Gunakan gap di sini untuk mengatur jarak margin celah antar kartu kategori. */
+.today-cards-grid {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 24px !important; /* Jarak margin/celah di antara kartu kategori (Silakan ubah secara manual) */
+}
+
+/* ==========================================================================
+   ─── Post Detail Page Spacing & Layout Customizations ───
+   ========================================================================== */
+
+/* Container halaman detail post secara keseluruhan (jarak atas dari Search Header ke Main Card) */
+.post-detail-page-container {
+  padding-top: 16px !important; /* Default: 24px. Silakan ubah nilai ini secara manual */
+  padding-bottom: 64px !important; /* Default: 64px. Jarak bawah halaman */
+}
+
+/* Baris aksi atas (Like, Share, Profil, Simpan) */
+.post-detail-actions-bar {
+  margin-top: 8px !important;
+  margin-bottom: 8px !important; /* Default: 24px. Jarak dari tombol aksi ke profil kreator */
+}
+
+/* Informasi kreator (Avatar + Username) */
+.post-detail-creator-row {
+  padding-bottom: 8px !important; /* Default: 20px. Jarak dari profil kreator ke teks Caption */
+}
+
+/* Area Caption / Judul Pin */
+.post-detail-caption-box {
+  margin-bottom: 8px !important; /* Default: 20px. Jarak dari Caption ke Garis Pembatas (hr) */
+}
+
+/* Garis Pembatas (hr) */
+.post-detail-divider {
+  margin-bottom: 8px !important; /* Default: 20px. Jarak dari Garis Pembatas ke judul "Komentar" */
+}
+
+/* Container isi sidebar kolom kanan (interaksi, caption, dan area komentar) 
+   Gunakan padding-left di sini untuk mengatur jarak aman horizontal di sebelah kiri dari garis pembatas gambar (left border). */
+.post-detail-aside-content {
+  padding-left: 16px !important; /* Jarak aman dari garis gambar di sebelah kiri (Silakan ubah angka ini secara manual) */
+  padding-right: 16px !important; /* Jarak aman dari sisi kanan kartu */
+}
+
+/* Menghilangkan padding bawaan pada anak-anaknya agar diatur satu pintu secara rapi oleh .post-detail-aside-content di atas */
+.post-detail-aside-content > .flex-none,
+.post-detail-aside-content .flex-1.overflow-y-auto,
+.post-detail-aside-content .flex-none.w-full.border-t {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Tombol "Simpan" berwarna merah (mengatur kelengkungan / curve sudut tombol) */
+.post-detail-save-btn {
+  border-radius: 12px !important; /* Default: 9999px (bulat penuh/kapsul). Silakan ganti angka ini (misal: 8px, 12px, atau 16px) untuk menyesuaikan kelengkungan */
+}
+
+/* ==========================================================================
+   ─── Category Detail Page Spacing & Layout Customizations ───
+   ========================================================================== */
+
+/* Container halaman detail kategori secara keseluruhan (diatur agar lebar pas dengan tepi Grid Foto) */
+.category-page-container {
+  padding-top: 16px !important; /* Jarak atas dari Search Header ke tombol kembali / judul (Silakan ubah secara manual) */
+  padding-bottom: 64px !important; /* Jarak bawah halaman */
+  padding-left: 16px !important; /* Jarak kiri aman untuk Grid Foto (mobile) */
+  padding-right: 16px !important; /* Jarak kanan aman untuk Grid Foto (mobile) */
+}
+
+@media (min-width: 640px) {
+  .category-page-container {
+    padding-left: 24px !important; /* Jarak kiri aman untuk Grid Foto agar foto melebar maksimal (desktop) (Silakan ubah secara manual) */
+    padding-right: 24px !important; /* Jarak kanan aman untuk Grid Foto agar foto melebar maksimal (desktop) (Silakan ubah secara manual) */
+  }
+}
+
+/* Wrapper area teks & tombol di bagian atas (Tombol Kembali + Judul + Info Board + Tombol Aksi)
+   Gunakan padding horizontal di sini untuk mengatur jarak aman teks agar posisinya terpusat/masuk ke dalam */
+.category-page-header-wrapper {
+  padding-left: 8px !important; /* Jarak kiri teks dari tepi layar (mobile) */
+  padding-right: 8px !important; /* Jarak kanan teks dari tepi layar (mobile) */
+}
+
+@media (min-width: 768px) {
+  .category-page-header-wrapper {
+    padding-left: 64px !important; /* Jarak kiri teks agar masuk ke dalam/terpusat (desktop) (Silakan ubah secara manual) */
+    padding-right: 86px !important; /* Jarak kanan teks agar masuk ke dalam/terpusat (desktop) (Silakan ubah secara manual) */
+  }
+}
+
+/* Tombol kembali (Back Arrow) */
+.category-page-back-btn {
+  margin-bottom: 16px !important; /* Jarak dari tombol kembali ke judul di bawahnya (Silakan ubah secara manual) */
+}
+
+/* Bagian header info papan kategori secara keseluruhan (jarak bawah ke grid foto) */
+.category-page-header-section {
+  margin-bottom: 32px !important; /* Jarak bawah dari seluruh informasi header ke Grid Foto di bawahnya (Silakan ubah secara manual) */
+}
+
+/* Judul Kategori Utama (misal: "Adha greeting") */
+.category-page-title {
+  margin-bottom: 12px !important; /* Jarak bawah dari Judul ke Baris Subtitle (Papan unggulan) (Silakan ubah secara manual) */
+}
+
+/* Baris Subtitle (Papan unggulan · 78 Pin) */
+.category-page-subtitle {
+  margin-bottom: 8px !important; /* Jarak bawah dari Subtitle ke deskripsi teks (Silakan ubah secara manual) */
+}
+
+/* Deskripsi Teks Kategori */
+.category-page-description {
+  margin-bottom: 12px !important; /* Jarak bawah dari deskripsi teks ke Profil Pembuat (oleh...) (Silakan ubah secara manual) */
+}
+
+/* Baris Profil Pembuat (oleh Pinterest Clone) */
+.category-page-creator-row {
+  margin-bottom: 0px !important; /* Jarak bawah dari pembuat ke batas bawah header */
+}
+
+/* Tombol "Bagikan" */
+.category-page-share-btn {
+  background-color: #efefef !important; /* Latar belakang tombol Bagikan (Silakan ubah secara manual) */
+  color: #111111 !important; /* Warna teks tombol */
+  border: none !important;
+  height: 64px !important; /* Tinggi tombol (Silakan ubah secara manual) */
+  padding: 0px 24px !important; /* Jarak padding kiri-kanan teks agar proporsional */
+  border-radius: 12px !important; /* Kelengkungan / curve sudut tombol (Ganti ke 8px, 12px, atau 16px sesuka Anda) */
+  font-weight: 500 !important; /* Ketebalan teks Bagikan */
+  font-size: 16px !important; /* Ukuran font teks */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.category-page-share-btn:hover {
+  background-color: #e2e2e2 !important; /* Efek hover saat disorot */
+}
+
+/* Tombol Titik Tiga "..." */
+.category-page-more-btn {
+  background-color: #efefef !important; /* Latar belakang tombol Titik Tiga (Silakan ubah secara manual) */
+  color: #111111 !important;
+  border: none !important;
+  width: 64px !important; /* Lebar tombol agar membentuk bulat sempurna (Silakan ubah secara manual) */
+  height: 64px !important; /* Tinggi tombol agar membentuk bulat sempurna (Silakan ubah secara manual) */
+  border-radius: 12px !important; /* Kelengkungan / curve bulat penuh (Ganti ke 8px, 12px, atau 16px sesuka Anda) */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.category-page-more-btn:hover {
+  background-color: #e2e2e2 !important; /* Efek hover saat disorot */
+}
+
+/* ─── Messages Dropdown Panel (Pinterest Style) ────────────────────── */
+
+/* Container utama panel Pesan */
+.message-panel-container {
+  width: 360px !important;
+  height: calc(100vh - 32px) !important; /* Spacing 16px atas dan 16px bawah */
+  background-color: var(--color-surface) !important;
+  border-radius: 24px !important; /* Kelengkungan sudut panel melayang (Silakan ubah: 16px, 24px, 32px) */
+  border: 1px solid var(--color-border-light) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-top: 32px !important;    /* Jarak atas dari tepi ke judul "Pesan" (Silakan ubah secara manual) */
+  padding-bottom: 32px !important; /* Jarak bawah (Silakan ubah secara manual) */
+  font-family: var(--font-family) !important;
+  user-select: none !important;
+  overflow-y: auto !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+  box-sizing: border-box !important;
+}
+
+/* Header bagian atas (Judul "Pesan" + Tombol X) */
+.message-panel-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-left: 24px !important;  /* Margin/padding horizontal header */
+  padding-right: 24px !important;
+  margin-bottom: 28px !important; /* Jarak bawah dari header ke list menu (Silakan ubah secara manual) */
+}
+
+/* Judul "Pesan" */
+.message-panel-title {
+  font-size: 20px !important; /* Ukuran font judul "Pesan" (Silakan ubah: 18px, 20px, 24px) */
+  font-weight: 700 !important; /* Ketebalan teks */
+  color: var(--color-text-primary) !important;
+  letter-spacing: -0.5px !important;
+}
+
+/* Tombol Tutup (X) */
+.message-panel-close-btn {
+  padding: 8px !important; /* Padding tombol */
+  border-radius: var(--radius-full) !important;
+  color: var(--color-text-primary) !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color 0.2s !important;
+}
+
+.message-panel-close-btn:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* List Menu Aksi (Pesan Baru + Undang Teman) */
+.message-panel-menu-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important; /* Jarak antar tombol menu aksi (Silakan ubah secara manual) */
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  margin-bottom: 48px !important; /* Jarak pemisah dari menu ke ilustrasi di bawahnya (Silakan ubah secara manual) */
+}
+
+/* Item Menu Tunggal */
+.message-panel-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important; /* Jarak horizontal dari ikon bulat ke teks (Silakan ubah secara manual) */
+  padding: 12px !important; /* Spacing dalam menu aksi agar terlihat lega & premium (Silakan ubah secara manual) */
+  border-radius: var(--radius-xl) !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+}
+
+.message-panel-menu-item:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* Ikon Bundar (Merah untuk Pesan Baru, Abu untuk Undang) */
+.message-panel-menu-icon-wrapper {
+  width: 48px !important;  /* Ukuran lebar lingkaran ikon (Silakan ubah secara manual) */
+  height: 48px !important; /* Ukuran tinggi lingkaran ikon (Silakan ubah secara manual) */
+  border-radius: var(--radius-full) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.message-panel-menu-icon-wrapper.new-msg {
+  background-color: var(--color-pinterest-red) !important;
+  color: #ffffff !important;
+}
+
+.message-panel-menu-icon-wrapper.invite-friends {
+  background-color: var(--color-surface-secondary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* SVG Ikon Menu */
+.message-panel-menu-icon-svg {
+  width: 22px !important;  /* Ukuran ikon di dalam lingkaran (Silakan ubah secara manual) */
+  height: 22px !important;
+}
+
+/* Teks Item Menu */
+.message-panel-menu-title {
+  font-size: 16px !important; /* Ukuran teks judul aksi (Silakan ubah: 14px, 16px, 18px) */
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+}
+
+/* Sub-teks Item Menu */
+.message-panel-menu-subtitle {
+  font-size: 13px !important; /* Ukuran teks deskripsi kecil (Silakan ubah secara manual) */
+  color: var(--color-text-secondary) !important;
+  margin-top: 4px !important;
+}
+
+/* Area tengah ilustrasi (Botol pesan + Keterangan) */
+.message-panel-illustration-section {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  gap: 24px !important; /* Jarak antara gambar botol ke tulisan di bawahnya (Silakan ubah secara manual) */
+}
+
+/* Pembungkus Gambar */
+.message-panel-image-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Gambar Botol Pesan */
+.message-panel-image {
+  width: 160px !important; /* Ukuran lebar gambar botol pesan (Silakan ubah: 140px, 160px, 180px) */
+  height: auto !important;
+  object-fit: contain !important;
+  transition: transform 0.2s !important;
+}
+
+.message-panel-image:hover {
+  transform: scale(1.05) !important;
+}
+
+/* Kontainer Teks Keterangan */
+.message-panel-desc-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important; /* Jarak dari judul "Mulai percakapan" ke penjelasan (Silakan ubah secara manual) */
+  max-width: 280px !important;
+}
+
+/* Judul "Mulai percakapan" */
+.message-panel-desc-title {
+  font-size: 20px !important; /* Ukuran teks judul area bawah (Silakan ubah: 18px, 20px, 22px) */
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  letter-spacing: -0.3px !important;
+}
+
+/* Deskripsi paragraf */
+.message-panel-desc-text {
+  font-size: 14px !important; /* Ukuran teks penjelasan bawah (Silakan ubah secara manual) */
+  line-height: 1.6 !important;
+  color: var(--color-text-secondary) !important;
+  font-weight: 400 !important;
+}
+
+/* ─── Notification Sidebar Panel (Pinterest Style) ─────────────────── */
+
+/* Container utama panel Notifikasi (Pembaruan) */
+.notif-panel-container {
+  width: 360px !important;
+  height: calc(100vh - 32px) !important; /* Spacing 16px atas dan 16px bawah */
+  background-color: var(--color-surface) !important;
+  border-radius: 24px !important; /* Kelengkungan sudut panel melayang (Silakan ganti: 16px, 24px, 32px) */
+  border: 1px solid var(--color-border-light) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-top: 32px !important;    /* Jarak atas judul "Pembaruan" (Silakan ubah secara manual) */
+  padding-bottom: 24px !important;
+  font-family: var(--font-family) !important;
+  user-select: none !important;
+  overflow: hidden !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+  box-sizing: border-box !important;
+}
+
+/* Header bagian atas (Judul "Pembaruan" + Tombol X) */
+.notif-panel-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  margin-bottom: 24px !important; /* Jarak bawah dari judul ke bar "Dilihat" (Silakan ubah secara manual) */
+}
+
+/* Judul "Pembaruan" */
+.notif-panel-title {
+  font-size: 20px !important; /* Ukuran teks judul "Pembaruan" tebal & proporsional (Silakan ubah) */
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  letter-spacing: -0.5px !important;
+}
+
+/* Tombol Tutup (X) */
+.notif-panel-close-btn {
+  padding: 8px !important;
+  border-radius: var(--radius-full) !important;
+  color: var(--color-text-primary) !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color 0.2s !important;
+}
+
+.notif-panel-close-btn:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* Bar Seksi ("Dilihat" + "Tandai semua dibaca") */
+.notif-panel-section-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  margin-bottom: 16px !important; /* Jarak bawah ke daftar notifikasi (Silakan ubah secara manual) */
+}
+
+/* Label Sub-seksi "Dilihat" */
+.notif-panel-section-title {
+  font-size: 16px !important; /* Ukuran teks "Dilihat" (Silakan ubah secara manual) */
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Tombol "Tandai semua dibaca" */
+.notif-panel-mark-read-btn {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--color-pinterest-red) !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: opacity 0.2s !important;
+}
+
+.notif-panel-mark-read-btn:hover {
+  text-decoration: underline !important;
+  opacity: 0.9 !important;
+}
+
+/* Container List Notifikasi */
+.notif-panel-list {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding-left: 12px !important; /* Padding samping area hover list */
+  padding-right: 12px !important;
+  padding-bottom: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important; /* Jarak antar notifikasi (Silakan ubah secara manual) */
+}
+
+/* Item Notifikasi Tunggal */
+.notif-item-container {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important; /* Jarak antara avatar dan tulisan */
+  padding: 12px !important; /* Luas area klik hover agar nyaman (Silakan ubah secara manual) */
+  border-radius: var(--radius-2xl) !important; /* Sudut melengkung item list */
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+  text-decoration: none !important;
+}
+
+.notif-item-container:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+.notif-item-container.unread {
+  background-color: #f9f9f9 !important; /* Latar belakang lembut untuk unread */
+}
+
+/* Avatar Aktor */
+.notif-item-avatar {
+  width: 48px !important;  /* Ukuran diameter avatar lebih premium (Silakan ubah) */
+  height: 48px !important;
+  border-radius: var(--radius-full) !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
+/* Badge Ikon Tipe Notifikasi (di sudut avatar) */
+.notif-item-badge {
+  position: absolute !important;
+  bottom: -4px !important;
+  right: -4px !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: var(--radius-full) !important;
+  background-color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 10px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid var(--color-border-light) !important;
+}
+
+/* Kontainer Tulisan Notifikasi */
+.notif-item-content {
+  flex: 1 !important;
+  min-width: 0 !important;
+  padding-right: 8px !important;
+}
+
+/* Baris Teks utama notifikasi */
+.notif-item-text {
+  font-size: 15px !important; /* Ukuran font teks penjelasan (Silakan ubah) */
+  line-height: 1.4 !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Nama Aktor */
+.notif-item-actor {
+  font-weight: 700 !important; /* Nama kreator tebal */
+}
+
+/* Label Aksi (menyukai, mengomentari, dsb.) */
+.notif-item-label {
+  font-weight: 400 !important;
+}
+
+/* Waktu Notifikasi */
+.notif-item-time {
+  font-size: 12px !important;
+  color: var(--color-text-secondary) !important;
+  margin-top: 4px !important;
+}
+
+/* Thumbnail Gambar Postingan (di sebelah kanan) */
+.notif-item-thumbnail {
+  width: 48px !important;  /* Lebar gambar pratinjau (Silakan ubah) */
+  height: 48px !important; /* Tinggi gambar pratinjau (Silakan ubah) */
+  border-radius: 12px !important; /* Kelengkungan sudut gambar */
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+  border: 1px solid var(--color-border-light) !important;
+}
+
+/* Titik Indikator Unread */
+.notif-item-unread-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: var(--radius-full) !important;
+  background-color: var(--color-pinterest-red) !important;
+  flex-shrink: 0 !important;
+  align-self: center !important;
+  margin-left: 4px !important;
+}
+
+/* ─── Settings & Support Sidebar Panel (Pinterest Style) ────────────── */
+
+/* Container utama panel Pengaturan & Dukungan */
+.settings-panel-container {
+  width: 360px !important;
+  height: calc(100vh - 32px) !important; /* Spacing 16px atas dan 16px bawah */
+  background-color: var(--color-surface) !important;
+  border-radius: 24px !important; /* Kelengkungan sudut panel melayang (Silakan ganti: 16px, 24px, 32px) */
+  border: 1px solid var(--color-border-light) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-top: 32px !important;    /* Jarak atas judul "Pengaturan & Dukungan" (Silakan ubah secara manual) */
+  padding-bottom: 24px !important;
+  font-family: var(--font-family) !important;
+  user-select: none !important;
+  overflow-y: auto !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+  box-sizing: border-box !important;
+}
+
+/* Header bagian atas (Judul + Tombol X) */
+.settings-panel-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  margin-bottom: 24px !important; /* Jarak bawah dari judul ke menu pertama (Silakan ubah secara manual) */
+}
+
+/* Judul "Pengaturan & Dukungan" */
+.settings-panel-title {
+  font-size: 20px !important; /* Ukuran font judul tebal & proporsional (Silakan ubah) */
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  letter-spacing: -0.5px !important;
+}
+
+/* Tombol Tutup (X) */
+.settings-panel-close-btn {
+  padding: 8px !important;
+  border-radius: var(--radius-full) !important;
+  color: var(--color-text-primary) !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color 0.2s !important;
+}
+
+.settings-panel-close-btn:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* List Menu Pengaturan */
+.settings-panel-menu-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important; /* Jarak antar baris menu pengaturan (Silakan ubah secara manual) */
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+
+/* Baris Menu Tunggal */
+.settings-panel-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important; /* Paling penting! Mendorong icon panah/eksternal ke ujung kanan */
+  padding: 12px 16px !important; /* Area padding hover yang lega & premium (Silakan ubah secara manual) */
+  border-radius: var(--radius-xl) !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+  text-decoration: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.settings-panel-menu-item:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* Teks Label Menu */
+.settings-panel-menu-text {
+  font-size: 15px !important; /* Ukuran teks menu (Silakan ubah secara manual) */
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  letter-spacing: -0.2px !important;
+}
+
+/* Ikon Eksternal Link */
+.settings-panel-menu-icon {
+  color: var(--color-text-secondary) !important;
+  opacity: 0.6 !important;
+  transition: opacity 0.2s, color 0.2s !important;
+  flex-shrink: 0 !important;
+}
+
+.settings-panel-menu-item:hover .settings-panel-menu-icon {
+  opacity: 1 !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Pemisah Label Seksi (Dukungan / Referensi) */
+.settings-panel-section-label {
+  padding-left: 32px !important;
+  margin-top: 24px !important;   /* Jarak atas ke grup menu sebelumnya (Silakan ubah secara manual) */
+  margin-bottom: 12px !important; /* Jarak bawah ke menu pertama seksi ini (Silakan ubah secara manual) */
+}
+
+/* Teks Judul Seksi (Dukungan / Referensi) */
+.settings-panel-section-title {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: var(--color-text-secondary) !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important; /* Huruf besar */
+}
+
+/* Grup Link Referensi Horizontal (Tentang, Pers, Bisnis...) */
+.settings-panel-link-group {
+  display: flex !important;
+  flex-wrap: wrap !important; /* Bungkus jika tidak muat sesempurna ss1 */
+  gap: 8px 12px !important; /* Jarak antar kata (Silakan ubah secara manual) */
+  padding-left: 32px !important;
+  padding-right: 32px !important;
+  margin-top: 4px !important;
+}
+
+/* Item Link Tunggal */
+.settings-panel-link-item {
+  font-size: 13px !important; /* Ukuran font link referensi (Silakan ubah secara manual) */
+  font-weight: 600 !important;
+  color: #3b82f6 !important; /* Biru elegan khas link referensi Pinterest */
+  text-decoration: none !important;
+  transition: text-decoration 0.2s !important;
+}
+
+.settings-panel-link-item:hover {
+  text-decoration: underline !important;
+}
+
+/* ─── Profile Dropdown Panel (Pinterest Style) ─────────────────────── */
+
+/* Container Utama Dropdown Profil */
+.profile-dropdown-container {
+  position: absolute !important;
+  right: 0 !important;
+  top: 100% !important;
+  margin-top: 8px !important;
+  width: 320px !important; /* Lebar dropdown profil (Silakan ubah secara manual) */
+  background-color: var(--color-surface) !important;
+  border-radius: 20px !important; /* Kelengkungan sudut dropdown (Ganti ke 16px, 20px, atau 24px) */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid var(--color-border-light) !important;
+  padding: 16px !important; /* Spacing dalam dropdown (Silakan ubah secara manual) */
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important; /* Jarak antar seksi/menu (Silakan ubah secara manual) */
+  z-index: 60 !important;
+  box-sizing: border-box !important;
+}
+
+/* Label Seksi Separator ("Saat ini menggunakan" / "Akun Anda") */
+.profile-dropdown-section-label {
+  font-size: 12px !important;
+  color: var(--color-text-secondary) !important;
+  font-weight: 500 !important;
+  padding-left: 8px !important;
+  margin-bottom: -4px !important;
+}
+
+/* Kartu Profil Aktif */
+.profile-dropdown-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important; /* Jarak dari avatar ke deskripsi teks (Silakan ubah secara manual) */
+  padding: 12px 8px !important; /* Padding dalam kartu profil */
+  border-radius: var(--radius-xl) !important;
+  background-color: transparent !important;
+  transition: background-color 0.2s !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+.profile-dropdown-card:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* Bulatan Avatar Pengguna di dalam Dropdown */
+.profile-dropdown-avatar {
+  width: 60px !important;  /* Diameter avatar profil (Silakan ubah secara manual) */
+  height: 60px !important;
+  border-radius: var(--radius-full) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+}
+
+/* Inisial Huruf (jika tidak ada foto profil) */
+.profile-dropdown-avatar-initial {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 24px !important; /* Ukuran huruf inisial */
+  font-weight: 600 !important;
+  background-color: #e1f5fe !important; /* Latar belakang biru pastel */
+  color: #0288d1 !important; /* Warna huruf biru */
+}
+
+/* Gambar Avatar */
+.profile-dropdown-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Detail Teks Kartu Profil */
+.profile-dropdown-card-details {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  flex-grow: 1 !important;
+}
+
+/* Nama Tampilan User */
+.profile-dropdown-card-title {
+  font-size: 16px !important; /* Ukuran nama (Silakan ubah secara manual) */
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  margin-bottom: 2px !important;
+}
+
+/* Sub-label ("Pribadi") */
+.profile-dropdown-card-subtitle {
+  font-size: 14px !important;
+  color: var(--color-text-secondary) !important;
+}
+
+/* Email Pengguna */
+.profile-dropdown-card-email {
+  font-size: 13px !important;
+  color: var(--color-text-secondary) !important;
+  margin-top: 2px !important;
+  word-break: break-all !important;
+}
+
+/* Tanda Centang Akun Aktif (Checkmark) */
+.profile-dropdown-card-checkmark {
+  font-size: 16px !important;
+  color: var(--color-text-primary) !important;
+  font-weight: bold !important;
+  flex-shrink: 0 !important;
+  margin-left: 4px !important;
+}
+
+/* Baris Tombol Menu Dropdown Profil (Keluar, Konversi, Tambah Akun) */
+.profile-dropdown-menu-item {
+  width: 100% !important;
+  text-align: left !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 10px 12px !important; /* Spacing vertikal-horizontal baris menu (Silakan ubah) */
+  border-radius: var(--radius-lg) !important;
+  font-size: 15px !important; /* Ukuran font menu (Silakan ubah secara manual) */
+  font-weight: 700 !important; /* Teks menu tebal premium */
+  color: var(--color-text-primary) !important;
+  transition: background-color 0.2s !important;
+  box-sizing: border-box !important;
+}
+
+.profile-dropdown-menu-item:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* ─── Sidebar Navigation (Pinterest Style) ────────────────────────── */
+
+/* Container Utama Sidebar Vertikal Kiri */
+.sidebar {
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 72px !important; /* Lebar total kolom Sidebar Kiri (Ganti: 72px, 80px, dsb.) */
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-top: 16px !important;    /* Jarak atas dari tepian ke logo Pinterest (Silakan ubah) */
+  padding-bottom: 20px !important; /* Jarak bawah dari tepian ke ikon Settings (Silakan ubah) */
+  background-color: var(--color-surface) !important;
+  border-right: 1px solid var(--color-border-light) !important;
+  z-index: 50 !important;
+}
+
+/* Jarak penahan kelompok atas (Logo + Tombol Menu Utama) */
+.sidebar-top-group {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 16px !important; /* Jarak antara Logo Pinterest ke tombol navigasi pertama (Silakan ubah) */
+}
+
+/* Logo Pinterest di Ujung Atas Sidebar */
+.sidebar-logo {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;  /* Lebar bundaran logo */
+  height: 48px !important; /* Tinggi bundaran logo */
+  border-radius: var(--radius-full) !important;
+  color: var(--color-pinterest-red) !important;
+  margin-bottom: 8px !important; /* Jarak bawah tambahan setelah logo */
+  transition: background-color 0.2s ease !important;
+  text-decoration: none !important;
+}
+
+.sidebar-logo:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* Kelompok Rantai Menu Navigasi */
+.sidebar-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 20px !important; /* Jarak/margin vertikal antar tombol navigasi (Silakan ganti: 16px, 20px, 24px) */
+  width: 100% !important;
+}
+
+/* Tombol / Item Navigasi Sidebar Tunggal (Home, Explore, Bell, Chat, dsb.) */
+.sidebar-nav-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;  /* Lebar area klik/bulatan tombol navigasi (Silakan ubah) */
+  height: 48px !important; /* Tinggi area klik/bulatan tombol navigasi (Silakan ubah) */
+  border-radius: var(--radius-full) !important; /* Bulat penuh (Silakan ubah: 12px, 16px, 50%) */
+  color: var(--color-text-primary) !important;
+  transition: color 0.15s ease, transform 0.15s ease, background-color 0.15s ease !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  border: none !important;
+  background: none !important;
+  position: relative !important;
+}
+
+/* Efek Hover Saat Disorot Cursor */
+.sidebar-nav-item:hover {
+  background-color: var(--color-surface-secondary) !important; /* Latar belakang abu saat disorot */
+  transform: scale(1.05) !important; /* Pembesaran mikro-animasi */
+}
+
+/* Status Navigasi AKTIF & Pemicu Dropdown AKTIF */
+.sidebar-nav-item.active,
+.sidebar-nav-item.dropdown-active {
+  background-color: var(--color-surface-secondary) !important; /* Tetap menyala abu saat terpilih */
+  color: var(--color-text-primary) !important;
+}
+
+/* ─── Detail Page Text Customization (Pinterest Style) ─────────────────── */
+
+/* 1. Post Detail Title / Caption (e.g. "ini piyona") */
+.post-detail-title {
+  font-size: 24px !important;       /* Ukuran font judul/caption (Silakan ubah) */
+  font-weight: 600 !important;       /* Ketebalan judul/caption */
+  line-height: 1.2 !important;       /* Spacing baris */
+  color: var(--color-text-primary) !important; /* Warna teks utama */
+  margin-top: 16px !important;       /* Jarak atas title */
+  margin-bottom: 24px !important;    /* Jarak bawah title */
+}
+
+/* 2. Creator Name / Username */
+.post-detail-creator-name {
+  font-size: 14px !important;       /* Ukuran font nama pembuat (Silakan ubah) */
+  font-weight: 600 !important;       /* Ketebalan teks */
+  color: var(--color-text-primary) !important;
+}
+
+/* 3. Comments Section Header (e.g. "6 Komentar" / "Komentar") */
+.post-detail-comment-header {
+  font-size: 16px !important;       /* Ukuran font header komentar (Silakan ubah) */
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  margin-bottom: 8px !important;
+}
+
+/* 4. Single Comment User Username */
+.post-detail-comment-user {
+  font-size: 13px !important;       /* Ukuran font nama pemberi komentar (Silakan ubah) */
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* 5. Single Comment Content Body / Text */
+.post-detail-comment-body {
+  font-size: 13px !important;       /* Ukuran font isi/teks komentar (Silakan ubah) */
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* 6. Single Comment Timestamp / Date / Reply button line */
+.post-detail-comment-time {
+  font-size: 12px !important;       /* Ukuran font tanggal komentar (Silakan ubah) */
+  font-weight: 600 !important;
+  color: var(--color-text-secondary) !important;
+}
+
+/* ─── Today Page Bottom Section Customization ────────────────────────── */
+
+/* Container Utama */
+.today-bottom-section {
+  margin-top: 64px !important;     /* Jarak atas penutup (Silakan ubah) */
+  margin-bottom: 80px !important;  /* Jarak bawah penutup (Silakan ubah) */
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 16px !important;            /* Jarak antar elemen vertikal */
+  text-align: center !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+
+/* Icon Wrapper Lonceng/Ceklist */
+.today-bottom-icon-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;
+  height: 48px !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* SVG Ceklis */
+.today-bottom-check-icon {
+  width: 40px !important;         /* Ukuran ikon ceklis (Silakan ubah) */
+  height: 40px !important;
+}
+
+/* Box Pembungkus Teks */
+.today-bottom-info-box {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;            /* Jarak antara sub-judul ke judul utama */
+}
+
+/* Sub-title ("Cukup sekian untuk hari ini") */
+.today-bottom-subtitle {
+  font-size: 16px !important;     /* Ukuran font sub-judul (Silakan ubah) */
+  font-weight: 400 !important;
+  color: var(--color-text-secondary) !important; /* Warna abu-abu Pinterest */
+}
+
+/* Title ("Kembali lagi besok untuk mendapatkan lebih banyak inspirasi") */
+.today-bottom-title {
+  font-size: 21px !important;     /* Ukuran font judul tebal (Silakan ubah) */
+  font-weight: 700 !important;     /* Teks tebal premium */
+  color: var(--color-text-primary) !important;
+  max-width: 600px !important;
+  line-height: 1.2 !important;
+}
+
+/* Tombol Kembali ke Beranda ("Kunjungi sajian beranda") */
+.today-bottom-btn {
+  margin-top: 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: var(--radius-full) !important;
+  background-color: var(--color-surface-secondary) !important; /* Warna abu-abu tombol Pinterest */
+  padding: 12px 24px !important;   /* Padding vertikal-horizontal tombol (Silakan ubah) */
+  font-size: 15px !important;     /* Ukuran font tombol (Silakan ubah) */
+  font-weight: 700 !important;     /* Teks tombol tebal */
+  color: var(--color-text-primary) !important;
+  text-decoration: none !important;
+  transition: background-color 0.2s, transform 0.1s !important;
+  cursor: pointer !important;
+}
+
+.today-bottom-btn:hover {
+  background-color: var(--color-border-light) !important; /* Warna hover sedikit lebih gelap */
+}
+
+.today-bottom-btn:active {
+  transform: scale(0.95) !important; /* Animasi klik mikro */
+}
+
+/* ─── Detail Page Options Dropdown (Three-dots menu) ─────────────────── */
+
+/* Dropdown Container Utama */
+.post-detail-dropdown {
+  position: absolute !important;
+  left: 0 !important;              /* Aligned left to extend to the right */
+  right: auto !important;
+  top: 100% !important;
+  z-index: 30 !important;
+  margin-top: 8px !important;      /* Jarak dari tombol pemicu */
+  width: 220px !important;         /* Lebar diperkecil agar pas dengan ss2 */
+  border-radius: 16px !important;
+  border: 1px solid var(--color-border-light) !important;
+  background-color: var(--color-surface) !important;
+  padding: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Header Kategori Menu ("OPSI PIN") */
+.post-detail-dropdown-header {
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--color-text-secondary) !important;
+}
+
+/* Item Menu Navigasi Tunggal */
+.post-detail-dropdown-item {
+  width: 100% !important;
+  display: block !important;
+  text-align: left !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  font-size: 15px !important;      /* Ukuran font opsi */
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  transition: background-color 0.2s !important;
+  box-sizing: border-box !important;
+}
+
+.post-detail-dropdown-item:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* Item Berbahaya / Hapus Pin */
+.post-detail-dropdown-item-danger {
+  color: var(--color-pinterest-red) !important;
+}
+
+.post-detail-dropdown-item-danger:hover {
+  background-color: var(--color-pinterest-red-light) !important;
+}
+
+/* Baris dengan Switch ("Izinkan komentar") */
+.post-detail-dropdown-toggle-row {
+  display: flex !important;
+  width: 100% !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  transition: background-color 0.2s !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+}
+
+.post-detail-dropdown-toggle-row:hover {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* Kapsul Switch Switcher */
+.post-detail-dropdown-toggle-switch {
+  position: relative !important;
+  display: inline-block !important;
+  height: 24px !important;
+  width: 44px !important;
+  border-radius: var(--radius-full) !important;
+  padding: 4px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.3s ease !important;
+  box-sizing: border-box !important;
+}
+
+/* Bulatan Switch Di Dalam */
+.post-detail-dropdown-toggle-circle {
+  position: absolute !important;
+  top: 2px !important;
+  height: 20px !important;
+  width: 20px !important;
+  border-radius: var(--radius-full) !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  transition: left 0.3s ease !important;
+}
+
+/* ==========================================================================
+   ─── Pinterest Lightbox Modal for Pin Expansion (Premium Design) ───
+   ========================================================================== */
+
+@keyframes pinLightboxFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
+}
+
+.pin-lightbox-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(26, 26, 26, 0.93) !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  animation: pinLightboxFadeIn 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+}
+
+.pin-lightbox-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 20px 24px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  z-index: 10001 !important;
+}
+
+.pin-lightbox-close-btn {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: var(--radius-full) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease, transform 0.15s ease !important;
+}
+
+.pin-lightbox-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  transform: scale(1.08) !important;
+}
+
+.pin-lightbox-close-btn:active {
+  transform: scale(0.92) !important;
+}
+
+.pin-lightbox-actions {
+  display: flex !important;
+  gap: 12px !important;
+  align-items: center !important;
+}
+
+.pin-lightbox-share-btn,
+.pin-lightbox-profile-btn {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  border-radius: var(--radius-full) !important;
+  padding: 10px 18px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease, transform 0.15s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.pin-lightbox-share-btn:hover,
+.pin-lightbox-profile-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  transform: scale(1.04) !important;
+}
+
+.pin-lightbox-share-btn:active,
+.pin-lightbox-profile-btn:active {
+  transform: scale(0.96) !important;
+}
+
+.pin-lightbox-save-btn {
+  background-color: #e60023 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  border-radius: var(--radius-full) !important;
+  padding: 10px 20px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease, transform 0.15s ease !important;
+}
+
+.pin-lightbox-save-btn:hover {
+  background-color: #ad0018 !important;
+  transform: scale(1.04) !important;
+}
+
+.pin-lightbox-save-btn:active {
+  transform: scale(0.96) !important;
+}
+
+.pin-lightbox-content {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.pin-lightbox-image-wrapper {
+  position: relative !important;
+  max-width: 90% !important;
+  max-height: 82vh !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: 20px !important;
+  transition: transform 0.15s ease !important;
+}
+
+.pin-lightbox-image {
+  max-width: 100% !important;
+  max-height: 80vh !important;
+  object-fit: contain !important;
+  border-radius: 20px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1) !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+}
+
+.pin-lightbox-search-btn {
+  position: absolute !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  border-radius: var(--radius-full) !important;
+  padding: 10px 18px !important;
+  border: none !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  z-index: 10002 !important;
+}
+
+.pin-lightbox-search-btn:hover {
+  background-color: #f1f1f1 !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
+}
+
+.pin-lightbox-search-btn:active {
+  transform: scale(0.95) !important;
+}
+
+.pin-lightbox-zoom-controls {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  z-index: 10005 !important;
+}
+
+.pin-lightbox-zoom-btn {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: var(--radius-full) !important;
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease !important;
+}
+
+.pin-lightbox-zoom-btn:hover {
+  background-color: #f1f1f1 !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.24) !important;
+}
+
+.pin-lightbox-zoom-btn:active {
+  transform: scale(0.9) !important;
+}
+
+/* ==========================================================================
+   ─── Pinterest Custom Reply Spacing & Nesting (Premium Style) ───
+   ========================================================================== */
+
+.post-detail-reply-list {
+  margin-left: 44px !important;      /* Menggeser komentar balasan (reply) ke kanan, lurus dengan awal teks komentar utama */
+  margin-top: 12px !important;       /* Jarak atas list reply dari komentar utama */
+  padding-left: 0 !important;        /* Hilangkan padding kiri bawaan */
+  border-left: none !important;      /* Hilangkan garis pembatas kiri bawaan sesuai acuan SS2 */
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;              /* Jarak vertikal antar item balasan */
+}
+
+.post-detail-reply-item {
+  display: flex !important;
+  width: 100% !important;
+  align-items: start !important;
+  gap: 10px !important;              /* Jarak antara avatar reply ke konten teks */
+}
+
+.post-detail-reply-avatar-wrapper {
+  width: 24px !important;            /* Mengatur diameter avatar reply berukuran kecil */
+  height: 24px !important;
+  border-radius: var(--radius-full) !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+}
+
+.post-detail-reply-content {
+  min-width: 0 !important;
+  flex: 1 !important;
 }

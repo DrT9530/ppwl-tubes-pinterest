@@ -25,21 +25,19 @@ export function SettingsDropdown({ onClose }: SettingsDropdownProps) {
     { label: "Persyaratan Layanan", hasIcon: true },
   ];
 
+  const referenceLinks = [
+    { label: "Tentang", link: "#" },
+    { label: "Pers", link: "#" },
+    { label: "Bisnis", link: "#" },
+    { label: "Karier", link: "#" },
+    { label: "Pengembang", link: "#" },
+  ];
+
   return (
-    <div 
-      // pt-14 mengubah padding atas kontainer menjadi lebih tebal (56px) 
-      // Ini otomatis mendorong seluruh elemen di dalamnya (termasuk judul) untuk turun ke bawah
-      className="!w-[360px] !h-screen !bg-white rounded-r-[24px] rounded-l-none !border-0 flex flex-col pt-14 pb-6 font-sans select-none overflow-y-auto transition-all scrollbar-hide"
-      style={{ 
-        boxShadow: "16px 0 32px rgba(0, 0, 0, 0.08)",
-        outline: "none",
-        border: "none"
-      }}
-    >
+    <div className="settings-panel-container scrollbar-hide">
       {/* ── HEADER ── */}
-      {/* pb-6 memberikan jarak yang pas antara judul dengan baris menu pertama di bawahnya */}
-      <div className="flex items-center justify-between pb-6 !pl-7 !pr-7 flex-shrink-0 !bg-transparent !border-0 !outline-none">
-        <span className="text-[18px] font-bold text-[#111] tracking-tight bg-transparent p-0 m-0 border-0 outline-none block">
+      <div className="settings-panel-header">
+        <span className="settings-panel-title">
           Pengaturan & Dukungan
         </span>
         <button 
@@ -47,48 +45,57 @@ export function SettingsDropdown({ onClose }: SettingsDropdownProps) {
             e.stopPropagation();
             onClose();
           }} 
-          className="p-1.5 hover:bg-gray-100 rounded-full text-[#111] transition-colors cursor-pointer flex items-center justify-center flex-shrink-0 !border-0 !bg-transparent !outline-none m-0 evaluation-none"
+          className="settings-panel-close-btn"
+          title="Tutup"
         >
-          <X size={18} strokeWidth={2.5} />
+          <X size={20} strokeWidth={2.5} />
         </button>
       </div>
 
       {/* ── GRUP MENU 1: PENGATURAN UTAMA ── */}
-      <div className="flex flex-col gap-1 !pl-6 !pr-6 w-full box-border">
+      <div className="settings-panel-menu-list">
         {generalMenus.map((menu, idx) => (
-          <div
-            key={idx}
-            className="flex items-center justify-start gap-2.5 py-2.5 px-3 rounded-xl cursor-pointer transition-all !bg-transparent hover:!bg-gray-100 group !border-0 !outline-none w-full"
-          >
-            <span className="text-[14px] font-semibold tracking-tight text-[#111] !bg-transparent p-0 m-0 !border-0 !outline-none inline-block align-middle">
+          <div key={idx} className="settings-panel-menu-item">
+            <span className="settings-panel-menu-text">
               {menu.label}
             </span>
             {menu.hasIcon && (
-              <ExternalLink size={14} className="text-gray-400 group-hover:text-[#111] flex-shrink-0 inline-block align-middle" strokeWidth={2.5} />
+              <ExternalLink size={14} className="settings-panel-menu-icon" strokeWidth={2.5} />
             )}
           </div>
         ))}
       </div>
 
       {/* ── LABEL SEPARATOR: DUKUNGAN ── */}
-      <div className="!pl-9 mt-5 mb-2">
-        <span className="text-[12px] font-bold text-gray-400 tracking-wide block">Dukungan</span>
+      <div className="settings-panel-section-label">
+        <span className="settings-panel-section-title">Dukungan</span>
       </div>
 
       {/* ── GRUP MENU 2: DUKUNGAN & PRIVASI ── */}
-      <div className="flex flex-col gap-1 pb-6 !pl-6 !pr-6 w-full box-border">
+      <div className="settings-panel-menu-list">
         {supportMenus.map((menu, idx) => (
-          <div
-            key={idx}
-            className="flex items-center justify-start gap-2.5 py-2.5 px-3 rounded-xl cursor-pointer transition-all !bg-transparent hover:!bg-gray-100 group !border-0 !outline-none w-full"
-          >
-            <span className="text-[14px] font-semibold tracking-tight text-[#111] !bg-transparent p-0 m-0 !border-0 !outline-none inline-block align-middle">
+          <div key={idx} className="settings-panel-menu-item">
+            <span className="settings-panel-menu-text">
               {menu.label}
             </span>
             {menu.hasIcon && (
-              <ExternalLink size={14} className="text-gray-400 group-hover:text-[#111] flex-shrink-0 inline-block align-middle" strokeWidth={2.5} />
+              <ExternalLink size={14} className="settings-panel-menu-icon" strokeWidth={2.5} />
             )}
           </div>
+        ))}
+      </div>
+
+      {/* ── LABEL SEPARATOR: REFERENSI ── */}
+      <div className="settings-panel-section-label">
+        <span className="settings-panel-section-title">Referensi</span>
+      </div>
+
+      {/* ── GRUP REFERENSI (TENTANG, PERS, BISNIS...) ── */}
+      <div className="settings-panel-link-group">
+        {referenceLinks.map((link, idx) => (
+          <a key={idx} href={link.link} className="settings-panel-link-item">
+            {link.label}
+          </a>
         ))}
       </div>
     </div>

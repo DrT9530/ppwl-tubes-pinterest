@@ -28,7 +28,42 @@ export function CreatePostModal() {
   }, [previewUrl]);
 
   const createPost = useMutation({
-    mutationFn: (formData: FormData) => postService.create(formData),
+    mutationFn: async ({ image, caption }: { image: File; caption: string }) => {
+      // 1. Dapatkan upload signature dari Backend AWS Lambda
+      const sigRes = await postService.getUploadSignature();
+      if (!sigRes.success || !sigRes.data) {
+        throw new Error(sigRes.message || "Gagal mengotorisasi unggahan gambar");
+      }
+
+      const { signature, timestamp, apiKey, folder, cloudName } = sigRes.data;
+
+      // 2. Unggah gambar fisik langsung ke Cloudinary dari browser
+      const formData = new FormData();
+      formData.append("file", image);
+      formData.append("api_key", apiKey);
+      formData.append("timestamp", String(timestamp));
+      formData.append("folder", folder);
+      formData.append("signature", signature);
+
+      const cloudinaryRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const cloudinaryData = await cloudinaryRes.json();
+      if (!cloudinaryRes.ok) {
+        throw new Error(cloudinaryData.error?.message || "Gagal mengunggah gambar ke Cloudinary");
+      }
+
+      const imageUrl = cloudinaryData.secure_url;
+
+      // 3. Simpan URL gambar dan caption ke database backend
+      const response = await postService.create({ imageUrl, caption });
+      return response;
+    },
     onSuccess: async (response) => {
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
       toast.success("Pin berhasil dibuat");
@@ -67,10 +102,7 @@ export function CreatePostModal() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("image", image);
-    formData.append("caption", caption);
-    createPost.mutate(formData);
+    createPost.mutate({ image, caption });
   };
 
   return (

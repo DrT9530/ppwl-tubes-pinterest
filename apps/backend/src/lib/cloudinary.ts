@@ -101,3 +101,18 @@ export async function deleteImageFromCloudinary(imageUrl: string) {
     throw new Error(result?.error?.message || "Gagal menghapus gambar dari Cloudinary");
   }
 }
+
+export function getCloudinaryUploadSignature() {
+  const { cloudName, apiKey, apiSecret } = getCloudinaryConfig();
+  const timestamp = Math.floor(Date.now() / 1000);
+  const folder = "ppwl-pinterest/posts";
+  const signature = signParams({ folder, timestamp }, apiSecret);
+
+  return {
+    signature,
+    timestamp,
+    apiKey,
+    folder,
+    cloudName,
+  };
+}

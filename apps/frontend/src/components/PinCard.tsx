@@ -25,8 +25,8 @@ function PinMoreMenu({
       let left = rect.right - menuWidth;
       if (left < 8) left = 8;
       setPos({
-        top: rect.bottom + 6,
-        left,
+        top: rect.bottom + window.scrollY + 6,
+        left: left + window.scrollX,
       });
     }
   }, [anchorRef]);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera, Edit3, X, Lock } from "lucide-react";
@@ -17,12 +17,30 @@ export function ProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser, setUser } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [profile, setProfile] = useState<any>(null);
   const [createdPosts, setCreatedPosts] = useState<PostDTO[]>([]);
   const [savedPosts, setSavedPosts] = useState<PostDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
+
+  // Ambil tab aktif dari search query parameter (?tab=saved)
+  const queryParams = new URLSearchParams(location.search);
+  const tabParam = queryParams.get("tab");
+  const [activeTab, setActiveTab] = useState<"posts" | "saved">(
+    tabParam === "saved" ? "saved" : "posts"
+  );
+
+  // Sync activeTab ketika search query berubah (misal diklik dari sidebar)
+  useEffect(() => {
+    const qParams = new URLSearchParams(location.search);
+    const tab = qParams.get("tab");
+    if (tab === "saved") {
+      setActiveTab("saved");
+    } else if (tab === "posts") {
+      setActiveTab("posts");
+    }
+  }, [location.search]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const isOwnProfile = currentUser?.id === id;

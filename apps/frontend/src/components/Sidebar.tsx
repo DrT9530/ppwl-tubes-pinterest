@@ -5,14 +5,16 @@ import { MessageDropdown } from "./MessageDropdown";
 import { NotificationSidebar } from "./NotificationSidebar";
 import { SettingsDropdown } from "./SettingsDropdown";
 import { useNotificationStore } from "../stores/notification.store";
+import { useQueryClient } from "@tanstack/react-query";
+import { notificationService } from "../services/notification.service";
+import pionterestLogo from "../assets/Pionterest.png";
+import { useAuthStore } from "../stores/auth.store";
 
 import {
   Home,
   Compass,
   LayoutGrid,
   Plus,
-  Bell,
-  MessageCircle,
   Settings,
 } from "lucide-react";
 
@@ -49,7 +51,65 @@ export function Sidebar() {
     }, 280);
   };
 
-  const { unreadCount } = useNotificationStore();
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+  const { unreadCount, setUnreadCount, reset } = useNotificationStore();
+
+  useEffect(() => {
+    // 1. Fetch initial unread count
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await notificationService.getUnreadCount();
+        if (res.data) {
+          setUnreadCount(res.data.count);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil unread count", err);
+      }
+    };
+    fetchUnreadCount();
+
+    // 2. Establish persistent WebSocket for real-time notifications
+    const token = localStorage.getItem("auth_token");
+    if (!token) return;
+
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const wsUrl = apiUrl.replace(/^http/, 'ws');
+    const ws = new WebSocket(`${wsUrl}/ws/notifications?token=${token}`);
+
+    ws.onopen = () => {
+      console.log("[WS-Sidebar] Connected to notification server");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "NEW_NOTIFICATION") {
+          const newNotif = data.payload;
+          // Update Query Cache so the list is updated when user opens NotificationSidebar
+          queryClient.setQueryData(["notifications"], (oldData: any) => {
+            if (!oldData) return { data: [newNotif] };
+            return {
+              ...oldData,
+              data: [newNotif, ...oldData.data]
+            };
+          });
+          // Increment unread count in store
+          setUnreadCount(useNotificationStore.getState().unreadCount + 1);
+        }
+      } catch (err) {
+        console.error("WS Sidebar Message Error", err);
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error("[WS-Sidebar] Error:", err);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [queryClient, setUnreadCount]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -90,8 +150,8 @@ export function Sidebar() {
 
   const mainNavItems = [
     { icon: Home, path: "/", label: "Home" },
-    { icon: Compass, path: "/explore", label: "Explore" },
-    { icon: LayoutGrid, path: "/boards", label: "Your boards" },
+    { icon: Compass, path: "/today", label: "Explore" },
+    { icon: LayoutGrid, path: user ? `/profile/${user.id}?tab=saved` : "/profile/me", label: "Your boards" },
     { icon: Plus, path: "/create", label: "Create" },
   ];
 
@@ -99,19 +159,50 @@ export function Sidebar() {
     <aside className="sidebar" id="main-sidebar">
       {/* ── Top group: Logo + all main nav ── */}
       <div className="sidebar-top-group">
-        {/* Pinterest Logo */}
+        {/* Pionterest Logo */}
         <Link to="/" className="sidebar-logo" id="sidebar-logo">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-            <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
-          </svg>
+          <img src={pionterestLogo} alt="Pionterest Logo" className="w-[32px] h-[32px] object-contain" />
         </Link>
 
         {/* Main Navigation Items */}
         <nav className="sidebar-nav">
           {mainNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path && !showMsgDropdown && !showNotifSidebar;
+            let isActive = false;
+            if (item.label === "Your boards") {
+              isActive = user ? (location.pathname === `/profile/${user.id}` && location.search.includes("tab=saved")) : false;
+            } else if (item.path === "/") {
+              isActive = location.pathname === "/";
+            } else {
+              isActive = location.pathname.startsWith(item.path.split("?")[0]);
+            }
             
+            const renderIcon = () => {
+              if (item.label === "Home" && isActive) {
+                return (
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <path d="M9.59.92a3.63 3.63 0 0 1 4.82 0l7.25 6.44A4 4 0 0 1 23 10.35v8.46a3.9 3.9 0 0 1-3.6 3.92 106 106 0 0 1-14.8 0A3.9 3.9 0 0 1 1 18.8v-8.46a4 4 0 0 1 1.34-3zM12 16a5 5 0 0 1-3.05-1.04l-1.23 1.58a7 7 0 0 0 8.56 0l-1.23-1.58A5 5 0 0 1 12 16"></path>
+                  </svg>
+                );
+              }
+              
+              if (item.label === "Explore" && isActive) {
+                return (
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4m0 14a12 12 0 1 0 0-24 12 12 0 0 0 0 24M8.8 7.24l8-1.6a1.32 1.32 0 0 1 1.56 1.55l-1.6 8a2 2 0 0 1-1.57 1.57l-8 1.6a1.32 1.32 0 0 1-1.55-1.55l1.6-8A2 2 0 0 1 8.8 7.24"></path>
+                  </svg>
+                );
+              }
+              
+              const Icon = item.icon;
+              return (
+                <Icon
+                  size={24}
+                  strokeWidth={isActive ? 2.5 : 1.8}
+                  fill={isActive ? "currentColor" : "none"}
+                />
+              );
+            };
+
             return (
               <Link
                 key={item.path}
@@ -120,11 +211,7 @@ export function Sidebar() {
                 title={item.label}
                 id={`sidebar-${item.label.toLowerCase().replace(/\s/g, "-")}`}
               >
-                <Icon
-                  size={24}
-                  strokeWidth={isActive ? 2.5 : 1.8}
-                  fill={isActive ? "currentColor" : "none"}
-                />
+                {renderIcon()}
               </Link>
             );
           })}
@@ -139,25 +226,29 @@ export function Sidebar() {
                   closeNotif();
                 } else {
                   setShowNotifSidebar(true);
+                  reset(); // Hilangkan bulatan notifikasi (unreadCount = 0) langsung saat dipencet
                   if (showMsgDropdown) closeMsg();
                   setShowSettingsDropdown(false);
                 }
               }}
               className={`sidebar-nav-item w-full flex items-center justify-center cursor-pointer border-0 bg-transparent transition-colors ${
-                showNotifSidebar ? "bg-gray-100 text-[#111]" : ""
+                showNotifSidebar ? "dropdown-active" : ""
               }`}
               title="Updates"
             >
               <div className="relative flex items-center justify-center w-full h-full">
-                <Bell
-                  size={24}
-                  strokeWidth={showNotifSidebar ? 2.5 : 1.8}
-                  fill={showNotifSidebar ? "currentColor" : "none"}
-                />
-                {unreadCount > 0 && (
-                  <span className="absolute top-[4px] right-[8px] min-w-[18px] h-[18px] bg-[#E60023] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
+                {showNotifSidebar ? (
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <path d="M20.54 14.24A3.15 3.15 0 0 0 23.66 17H24v2h-8v1h-.02a3.4 3.4 0 0 1-3.38 3h-1.2a3.4 3.4 0 0 1-3.38-3H8v-1H0v-2h.34a3.15 3.15 0 0 0 3.12-2.76l.8-6.41a7.8 7.8 0 0 1 15.48 0zM10 19.6c0 .77.63 1.4 1.4 1.4h1.2c.77 0 1.4-.63 1.4-1.4a.6.6 0 0 0-.6-.6h-2.8a.6.6 0 0 0-.6.6" className="custom-cursor-on-hover"></path>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="24" height="24">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    {unreadCount > 0 && (
+                      <circle cx="18" cy="6" r="3.5" fill="#E60023" stroke="none" />
+                    )}
+                  </svg>
                 )}
               </div>
             </button>
@@ -188,15 +279,19 @@ export function Sidebar() {
                 }
               }}
               className={`sidebar-nav-item w-full flex items-center justify-center cursor-pointer border-0 bg-transparent transition-colors ${
-                showMsgDropdown ? "bg-gray-100 text-[#111]" : ""
+                showMsgDropdown ? "dropdown-active" : ""
               }`}
               title="Messages"
             >
-              <MessageCircle
-                size={24}
-                strokeWidth={showMsgDropdown ? 2.5 : 1.8}
-                fill={showMsgDropdown ? "currentColor" : "none"}
-              />
+              {showMsgDropdown ? (
+                <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M17 22.35A11.5 11.5 0 1 1 22.36 17l.64 3.7a2 2 0 0 1-2.3 2.3zM7 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m5 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m5-3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3" className="custom-cursor-on-hover"></path>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M7 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m5 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m-5 10c1.8 0 3.5-.41 5-1.15l3.69.65A2 2 0 0 0 23 20.7l-.65-3.7A11.5 11.5 0 1 0 12 23.5m8.55-7.36-.28.58.76 4.31-4.31-.76-.58.28q-1.89.93-4.14.95a9.5 9.5 0 1 1 8.55-5.36" className="custom-cursor-on-hover"></path>
+                </svg>
+              )}
             </button>
 
             {/* PANEL DROPDOWN MELAYANG */}
@@ -224,7 +319,7 @@ export function Sidebar() {
               if (showNotifSidebar) closeNotif(); // Tutup notif kalau settings dibuka
             }}
             className={`sidebar-nav-item w-full flex items-center justify-center cursor-pointer border-0 bg-transparent transition-colors ${
-              showSettingsDropdown ? "bg-gray-100 text-[#111]" : ""
+              showSettingsDropdown ? "dropdown-active" : ""
             }`}
             title="Settings & support"
           >

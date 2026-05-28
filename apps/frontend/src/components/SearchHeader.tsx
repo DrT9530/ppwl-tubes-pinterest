@@ -3,7 +3,7 @@ import { Search, Camera, Mic } from "lucide-react";
 import { useAuthStore } from "../stores/auth.store";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export function SearchHeader() {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -79,33 +79,58 @@ export function SearchHeader() {
 
           {/* Dropdown */}
           {showDropdown && (
-            <div
-              className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-[60]"
-              style={{ animation: "var(--animate-slide-down)" }}
-            >
-              <div className="p-4 border-b border-gray-100">
-                <p className="font-semibold text-sm">{user.username}</p>
-                <p className="text-xs text-gray-500">{user.email}</p>
+            <div className="profile-dropdown-container">
+              {/* Section 1: Saat ini menggunakan */}
+              <div className="profile-dropdown-section-label">Saat ini menggunakan</div>
+              
+              <div 
+                onClick={() => {
+                  navigate(`/profile/${user.id}`);
+                  setShowDropdown(false);
+                }}
+                className="profile-dropdown-card"
+              >
+                <div className="profile-dropdown-avatar">
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.username}
+                      className="profile-dropdown-avatar-img"
+                    />
+                  ) : (
+                    <div className="profile-dropdown-avatar-initial">
+                      {getInitial(user.username)}
+                    </div>
+                  )}
+                </div>
+                <div className="profile-dropdown-card-details">
+                  <span className="profile-dropdown-card-title">{user.username}</span>
+                  <span className="profile-dropdown-card-subtitle">Pribadi</span>
+                  <span className="profile-dropdown-card-email truncate">{user.email}</span>
+                </div>
+                <span className="profile-dropdown-card-checkmark">✓</span>
               </div>
-              <div className="py-2">
-                <button
-                  onClick={() => {
-                    navigate(`/profile/${user.id}`);
-                    setShowDropdown(false);
-                  }}
-                  className="flex items-center gap-3 w-full px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors"
-                >
-                  <User size={18} />
-                  Your Profile
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-3 w-full px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors text-red-500"
-                >
-                  <LogOut size={18} />
-                  Log out
-                </button>
-              </div>
+
+              {/* Menu Item: Konversikan ke bisnis */}
+              <button className="profile-dropdown-menu-item">
+                Konversikan ke bisnis
+              </button>
+
+              {/* Section 2: Akun Anda */}
+              <div className="profile-dropdown-section-label">Akun Anda</div>
+
+              {/* Menu Item: Tambahkan akun */}
+              <button className="profile-dropdown-menu-item">
+                Tambahkan akun Pinterest
+              </button>
+
+              {/* Menu Item: Keluar */}
+              <button
+                onClick={handleLogout}
+                className="profile-dropdown-menu-item"
+              >
+                Keluar
+              </button>
             </div>
           )}
         </div>

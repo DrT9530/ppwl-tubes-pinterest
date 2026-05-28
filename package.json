@@ -8,7 +8,7 @@
   "scripts": {
     "dev:fe": "bun --filter frontend dev",
     "dev:be": "bun --filter backend dev",
-    "dev": "bun run dev:be & bun run dev:fe",
+    "dev": "concurrently -n \"BE,FE\" -c \"yellow,cyan\" \"bun run dev:be\" \"bun run dev:fe\"",
     "db:migrate": "bun --filter backend prisma migrate dev",
     "db:studio": "bun --filter backend prisma studio",
     "db:generate": "bun --filter backend prisma generate",
@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "date-fns": "^4.2.1"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.0"
   }
 }
