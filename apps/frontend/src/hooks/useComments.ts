@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { commentService } from "../services/comment.service";
+import toast from "react-hot-toast";
 
 export const useCreateComment = () => {
   const queryClient = useQueryClient();
@@ -9,6 +10,9 @@ export const useCreateComment = () => {
       commentService.createComment(postId, content, image, stickerUrl),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["post", variables.postId] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Gagal menambahkan komentar");
     },
   });
 };
@@ -21,6 +25,9 @@ export const useCreateReply = () => {
       commentService.createReply(commentId, content, image, stickerUrl),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["post"] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Gagal membalas komentar");
     },
   });
 };
