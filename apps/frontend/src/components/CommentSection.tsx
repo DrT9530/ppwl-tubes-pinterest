@@ -219,7 +219,7 @@ export const CommentSection = ({ postId, comments, onOpenAuthModal }: CommentSec
               <button 
                 type="submit" 
                 disabled={createCommentMutation.isPending} 
-                className="text-[13px] font-bold text-[#e60023] hover:text-[#b6001a] pl-1 transition-colors disabled:opacity-50 cursor-pointer" 
+                className="text-[13px] font-bold text-[#00000000] hover:text-[#000000] pl-1 transition-colors disabled:opacity-50 cursor-pointer" 
               >
                 Kirim
               </button>
