@@ -6,19 +6,34 @@ console.log("🔨 Generating Prisma client...");
 execSync("bunx prisma generate", { stdio: "inherit" });
 
 console.log("📦 Bundling for Lambda...");
-await build({
-  entryPoints: ["src/lambda.ts"],
-  bundle: true,
-  platform: "node",
-  target: "node20",
-  format: "esm",
-  banner: { js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" },
-  outfile: "dist/lambda.mjs",
-  external: [
-    "@prisma/client",
-    "prisma",
-  ],
-});
+await Promise.all([
+  build({
+    entryPoints: ["src/lambda.ts"],
+    bundle: true,
+    platform: "node",
+    target: "node20",
+    format: "esm",
+    banner: { js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" },
+    outfile: "dist/lambda.mjs",
+    external: [
+      "@prisma/client",
+      "prisma",
+    ],
+  }),
+  build({
+    entryPoints: ["src/ws-handler.ts"],
+    bundle: true,
+    platform: "node",
+    target: "node20",
+    format: "esm",
+    banner: { js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" },
+    outfile: "dist/ws-handler.mjs",
+    external: [
+      "@prisma/client",
+      "prisma",
+    ],
+  }),
+]);
 
 console.log("📂 Copying Prisma client to dist...");
 const fs = require("fs");

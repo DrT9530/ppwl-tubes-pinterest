@@ -9,15 +9,6 @@ Globals:
     Runtime: provided.al2023
     Architectures:
       - x86_64
-    Environment:
-      Variables:
-        NODE_ENV: production
-        DATABASE_URL: !Ref DatabaseUrl
-        JWT_SECRET: !Ref JwtSecret
-        GOOGLE_CLIENT_ID: !Ref GoogleClientId
-        GOOGLE_CLIENT_SECRET: !Ref GoogleClientSecret
-        FRONTEND_URL: !Ref FrontendUrl
-        BACKEND_URL: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
 
 Parameters:
   DatabaseUrl:
@@ -38,33 +29,167 @@ Parameters:
     Type: String
     Description: CloudFront URL atau S3 website URL
     Default: "http://localhost:5173"
+  BackendUrl:
+    Type: String
+    Description: URL Backend/API Gateway Anda di AWS (misal https://<api-id>.execute-api.us-east-1.amazonaws.com)
+    Default: "http://localhost:3000"
+  CloudinaryCloudName:
+    Type: String
+    Description: Cloudinary Cloud Name
+  CloudinaryApiKey:
+    Type: String
+    Description: Cloudinary API Key
+  CloudinaryApiSecret:
+    Type: String
+    Description: Cloudinary API Secret
+    NoEcho: true
 
 Resources:
   PinterestBackendFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: pinterest-clone-backend
-      Handler: lambda.default.fetch
+      Handler: lambda.fetch
       CodeUri: dist/
       Layers:
-        - !Sub "arn:aws:lambda:${AWS::Region}:717922813696:layer:bun:2"
+        - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:bun:3"
       Description: Pinterest Clone API
+      Environment:
+        Variables:
+          NODE_ENV: production
+          DATABASE_URL: !Ref DatabaseUrl
+          JWT_SECRET: !Ref JwtSecret
+          GOOGLE_CLIENT_ID: !Ref GoogleClientId
+          GOOGLE_CLIENT_SECRET: !Ref GoogleClientSecret
+          FRONTEND_URL: !Ref FrontendUrl
+          BACKEND_URL: !Ref BackendUrl
+          CLOUDINARY_CLOUD_NAME: !Ref CloudinaryCloudName
+          CLOUDINARY_API_KEY: !Ref CloudinaryApiKey
+          CLOUDINARY_API_SECRET: !Ref CloudinaryApiSecret
+          WEBSOCKET_CONNECTIONS_TABLE: !Ref WebsocketConnectionsTable
+          WEBSOCKET_API_ENDPOINT: !Sub "https://${PinterestWebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WebsocketConnectionsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "execute-api:ManageConnections"
+              Resource:
+                - !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PinterestWebSocketApi}/*"
       Events:
-        ApiRoot:
-          Type: Api
-          Properties:
-            Path: /
-            Method: ANY
-        ApiProxy:
-          Type: Api
+        CatchAll:
+          Type: HttpApi
           Properties:
             Path: /{proxy+}
             Method: ANY
+        RootPath:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: ANY
+
+  PinterestWebSocketFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: pinterest-clone-websocket
+      Handler: ws-handler.fetch
+      CodeUri: dist/
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:bun:3"
+      Description: Pinterest Clone WebSocket Handler
+      Environment:
+        Variables:
+          NODE_ENV: production
+          JWT_SECRET: !Ref JwtSecret
+          WEBSOCKET_CONNECTIONS_TABLE: !Ref WebsocketConnectionsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WebsocketConnectionsTable
+
+  WebsocketConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: pinterest-websocket-connections
+      AttributeDefinitions:
+        - AttributeName: connectionId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: connectionId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  PinterestWebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: PinterestWebSocketApi
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PinterestWebSocketApi
+      RouteKey: $connect
+      AuthorizationType: NONE
+      Target: !Sub "integrations/${ConnectIntegration}"
+      
+  ConnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref PinterestWebSocketApi
+      Description: Connect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PinterestWebSocketFunction.Arn}/invocations"
+
+  DisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PinterestWebSocketApi
+      RouteKey: $disconnect
+      Target: !Sub "integrations/${DisconnectIntegration}"
+
+  DisconnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref PinterestWebSocketApi
+      Description: Disconnect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PinterestWebSocketFunction.Arn}/invocations"
+
+  WebSocketDeployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn:
+      - ConnectRoute
+      - DisconnectRoute
+    Properties:
+      ApiId: !Ref PinterestWebSocketApi
+
+  WebSocketStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref PinterestWebSocketApi
+      DeploymentId: !Ref WebSocketDeployment
+      StageName: Prod
+
+  WebSocketPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PinterestWebSocketFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PinterestWebSocketApi}/*"
 
 Outputs:
   ApiUrl:
-    Description: "API Gateway endpoint URL"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+    Description: "HTTP API endpoint URL"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  WebSocketUrl:
+    Description: "WebSocket Gateway endpoint URL"
+    Value: !Sub "wss://${PinterestWebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
   LambdaFunctionArn:
     Description: "Lambda Function ARN"
     Value: !GetAtt PinterestBackendFunction.Arn

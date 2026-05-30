@@ -74,7 +74,6 @@ export function LikeButton({
     return (
       <button
         onClick={handleClick}
-        disabled={isPending}
         className="flex items-center gap-1 text-gray-500 hover:text-[#E60023] transition-colors group"
         aria-label={initialLiked ? "Unlike" : "Like"}
       >
@@ -102,7 +101,6 @@ export function LikeButton({
   return (
     <button
       onClick={handleClick}
-      disabled={isPending}
       className="flex items-center gap-1.5 px-3 py-2.5 rounded-full font-semibold transition-all duration-150 hover:bg-[#f1f1f1] active:bg-[#e1e1e1] active:scale-95 group text-[#111]"
       aria-label={initialLiked ? "Unlike" : "Like"}
     >
@@ -115,7 +113,7 @@ export function LikeButton({
           initialLiked
             ? "text-[#E60023]"
             : "text-[#111] group-hover:text-[#E60023]"
-        } ${isPending ? "opacity-50" : ""}`}
+        }`}
         fill="currentColor"
       >
         {initialLiked ? (

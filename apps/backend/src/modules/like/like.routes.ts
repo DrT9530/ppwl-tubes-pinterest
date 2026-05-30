@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { prisma } from "../../lib/prisma";
 import { authGuard } from "../../middleware/auth";
-import { sendNewNotification } from "../websocket";
+import { sendNewNotification } from "../../lib/realtime.service";
 
 export const likeRoutes = new Elysia({ prefix: "/posts" })
   .use(authGuard)

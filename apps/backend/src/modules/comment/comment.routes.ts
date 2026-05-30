@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { prisma } from "../../lib/prisma";
 import { authGuard } from "../../middleware/auth";
-import { sendNewNotification } from "../websocket";
+import { sendNewNotification } from "../../lib/realtime.service";
 import { uploadImageToCloudinary } from "../../lib/cloudinary";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
