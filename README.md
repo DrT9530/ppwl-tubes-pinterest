@@ -2,6 +2,15 @@
 
 Sebuah replika (clone) dari platform media sosial visual **Pinterest**. Proyek ini dikembangkan untuk mereplikasi fitur-fitur inti dari Pinterest, mulai dari autentikasi pengguna, eksplorasi *home feed*, unggah gambar (*pinning*), hingga interaksi antar pengguna melalui komentar, balasan, dan notifikasi.
 
+<div align="center">
+  <a href="https://d3jrjn9wcmxd7r.cloudfront.net">
+    <img src="https://img.shields.io/badge/Live_Demo-Frontend-e60023?style=for-the-badge&logo=amazon-aws&logoColor=white" alt="Frontend Live Demo" />
+  </a>
+  <a href="https://cop370h1ed.execute-api.us-east-1.amazonaws.com">
+    <img src="https://img.shields.io/badge/AWS_API-Backend-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white" alt="Backend API" />
+  </a>
+</div>
+
 ## 🚀 Fitur Utama
 
 - **Authentication & User Profile**: Sistem registrasi, login, dan manajemen profil pengguna.
