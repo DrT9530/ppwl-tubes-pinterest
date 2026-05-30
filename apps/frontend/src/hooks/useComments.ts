@@ -36,7 +36,30 @@ export const useLikeComment = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (commentId: string) => commentService.likeComment(commentId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["post"] }),
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries({ queryKey: ["post"] });
+      const previousData = queryClient.getQueriesData({ queryKey: ["post"] });
+      queryClient.setQueriesData({ queryKey: ["post"] }, (old: any) => {
+        if (!old?.data?.comments) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            comments: old.data.comments.map((c: any) =>
+              c.id === commentId ? { ...c, isLiked: true, likeCount: (c.likeCount || 0) + 1 } : c
+            ),
+          },
+        };
+      });
+      return { previousData };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
+      }
+      toast.error("Gagal menyukai komentar");
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["post"] }),
   });
 };
 
@@ -44,7 +67,29 @@ export const useUnlikeComment = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (commentId: string) => commentService.unlikeComment(commentId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["post"] }),
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries({ queryKey: ["post"] });
+      const previousData = queryClient.getQueriesData({ queryKey: ["post"] });
+      queryClient.setQueriesData({ queryKey: ["post"] }, (old: any) => {
+        if (!old?.data?.comments) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            comments: old.data.comments.map((c: any) =>
+              c.id === commentId ? { ...c, isLiked: false, likeCount: Math.max(0, (c.likeCount || 1) - 1) } : c
+            ),
+          },
+        };
+      });
+      return { previousData };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
+      }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["post"] }),
   });
 };
 
@@ -77,7 +122,32 @@ export const useLikeReply = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (replyId: string) => commentService.likeReply(replyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["post"] }),
+    onMutate: async (replyId) => {
+      await queryClient.cancelQueries({ queryKey: ["post"] });
+      const previousData = queryClient.getQueriesData({ queryKey: ["post"] });
+      queryClient.setQueriesData({ queryKey: ["post"] }, (old: any) => {
+        if (!old?.data?.comments) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            comments: old.data.comments.map((c: any) => ({
+              ...c,
+              replies: c.replies?.map((r: any) =>
+                r.id === replyId ? { ...r, isLiked: true, likeCount: (r.likeCount || 0) + 1 } : r
+              )
+            })),
+          },
+        };
+      });
+      return { previousData };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
+      }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["post"] }),
   });
 };
 
@@ -85,7 +155,32 @@ export const useUnlikeReply = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (replyId: string) => commentService.unlikeReply(replyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["post"] }),
+    onMutate: async (replyId) => {
+      await queryClient.cancelQueries({ queryKey: ["post"] });
+      const previousData = queryClient.getQueriesData({ queryKey: ["post"] });
+      queryClient.setQueriesData({ queryKey: ["post"] }, (old: any) => {
+        if (!old?.data?.comments) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            comments: old.data.comments.map((c: any) => ({
+              ...c,
+              replies: c.replies?.map((r: any) =>
+                r.id === replyId ? { ...r, isLiked: false, likeCount: Math.max(0, (r.likeCount || 1) - 1) } : r
+              )
+            })),
+          },
+        };
+      });
+      return { previousData };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
+      }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["post"] }),
   });
 };
 
@@ -104,4 +199,4 @@ export const useDeleteReply = () => {
     mutationFn: (replyId: string) => commentService.deleteReply(replyId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["post"] }),
   });
-};
+};

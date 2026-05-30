@@ -198,50 +198,53 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   )
 
   // ─── GET /auth/google ──────────────────────────────────────────────
-  .get("/google", async ({ cookie: { oauth_state, oauth_code_verifier }, redirect }) => {
+  .get("/google", async ({ set }) => {
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
     
-    const url = google.createAuthorizationURL(state, codeVerifier, [
+    // Encode state + codeVerifier into a single state param (no cookies needed)
+    // This avoids cookie issues with serverless Lambda + API Gateway redirects
+    const combinedState = Buffer.from(JSON.stringify({ s: state, cv: codeVerifier })).toString("base64url");
+
+    const url = google.createAuthorizationURL(combinedState, codeVerifier, [
       "profile",
       "email"
     ]);
 
-    oauth_state.set({
-      value: state,
-      path: "/",
-      secure: true,
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: 60 * 10 // 10 minutes
-    });
-
-    oauth_code_verifier.set({
-      value: codeVerifier,
-      path: "/",
-      secure: true,
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: 60 * 10
-    });
-
-    return redirect(url.toString());
+    set.status = 302;
+    set.headers["location"] = url.toString();
+    return "";
   })
 
   // ─── GET /auth/google/callback ─────────────────────────────────────
-  .get("/google/callback", async ({ query, cookie: { oauth_state, oauth_code_verifier, auth_token }, jwt, set, redirect }) => {
+  .get("/google/callback", async ({ query, cookie: { auth_token }, jwt, set, redirect }) => {
     const code = query.code as string;
-    const state = query.state as string;
-    const storedState = oauth_state?.value as string;
-    const storedCodeVerifier = oauth_code_verifier?.value as string;
+    const stateParam = query.state as string;
 
-    if (!code || !state || !storedState || !storedCodeVerifier || state !== storedState) {
+    if (!code || !stateParam) {
+      set.status = 400;
+      return { success: false, message: "Invalid request: missing code or state" };
+    }
+
+    // Decode state + codeVerifier from the state parameter
+    let state: string;
+    let codeVerifier: string;
+    try {
+      const decoded = JSON.parse(Buffer.from(stateParam, "base64url").toString());
+      state = decoded.s;
+      codeVerifier = decoded.cv;
+    } catch {
+      set.status = 400;
+      return { success: false, message: "Invalid state parameter" };
+    }
+
+    if (!state || !codeVerifier) {
       set.status = 400;
       return { success: false, message: "Invalid request or expired session" };
     }
 
     try {
-      const tokens = await google.validateAuthorizationCode(code, storedCodeVerifier);
+      const tokens = await google.validateAuthorizationCode(code, codeVerifier);
       
       const googleUserResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
         headers: {

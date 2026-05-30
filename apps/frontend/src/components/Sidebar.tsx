@@ -73,9 +73,12 @@ export function Sidebar() {
     const token = localStorage.getItem("auth_token");
     if (!token) return;
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const wsUrl = apiUrl.replace(/^http/, 'ws');
-    const ws = new WebSocket(`${wsUrl}/ws/notifications?token=${token}`);
+    const wsUrl = import.meta.env.VITE_API_WS_URL;
+    const wsConnectionUrl = wsUrl 
+      ? `${wsUrl}?token=${token}` 
+      : `${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000').replace(/^http/, 'ws')}/ws/notifications?token=${token}`;
+
+    const ws = new WebSocket(wsConnectionUrl);
 
     ws.onopen = () => {
       console.log("[WS-Sidebar] Connected to notification server");

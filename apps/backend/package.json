@@ -12,6 +12,8 @@
     "seed": "bun prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.1057.0",
+    "@aws-sdk/client-dynamodb": "^3.1057.0",
     "@elysiajs/cors": "^1.2.0",
     "@elysiajs/jwt": "^1.2.0",
     "@hono/node-server": "^2.0.3",

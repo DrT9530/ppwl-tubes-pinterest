@@ -1,106 +1,38 @@
-// src/lambda.ts — Entry point khusus untuk AWS Lambda (Node.js runtime)
-import { app } from "./app";
-
-// Convert Lambda event (API Gateway / Function URL) to standard Request
-function buildRequest(event: any): Request {
-  const isBase64 = event.isBase64Encoded;
-  const headers = new Headers();
-
-  if (event.headers) {
-    for (const [key, value] of Object.entries(event.headers)) {
-      if (value) headers.set(key, value as string);
+// src/lambda.ts — Entry point untuk AWS Lambda (Bun Lambda Layer + HTTP API v2)
+// Polyfill Headers.prototype.getAll for compatibility with legacy Bun Lambda layers
+if (typeof Headers.prototype.getAll !== "function") {
+  Headers.prototype.getAll = function (this: Headers, name: string) {
+    if (name.toLowerCase() === "set-cookie") {
+      if (typeof this.getSetCookie === "function") {
+        return this.getSetCookie();
+      }
+      const val = this.get("set-cookie");
+      return val ? [val] : [];
     }
-  }
-
-  // AWS Lambda Payload Format 2.0 / Function URL places cookies in event.cookies array.
-  // We need to map them back to the 'cookie' header so Elysia's cookie plugin can parse them.
-  if (event.cookies && event.cookies.length > 0) {
-    headers.set("cookie", event.cookies.join("; "));
-  }
-
-  const host = headers.get("host") || "localhost";
-  const proto = headers.get("x-forwarded-proto") || "https";
-  const rawPath = event.rawPath || event.requestContext?.http?.path || event.path || "/";
-  const rawQuery = event.rawQueryString || "";
-  const url = `${proto}://${host}${rawPath}${rawQuery ? `?${rawQuery}` : ""}`;
-
-  const method = (
-    event.requestContext?.http?.method ||
-    event.httpMethod ||
-    "GET"
-  ).toUpperCase();
-
-  let body: string | Buffer | undefined = undefined;
-  if (event.body) {
-    body = isBase64 ? Buffer.from(event.body, "base64") : event.body;
-  }
-
-  const init: RequestInit = { method, headers };
-  if (body && method !== "GET" && method !== "HEAD") {
-    init.body = body;
-  }
-
-  return new Request(url, init);
-}
-
-// Convert standard Response to Lambda response format
-async function buildResponse(response: Response) {
-  const headers: Record<string, string> = {};
-  response.headers.forEach((value, key) => {
-    // Skip set-cookie header as it will be returned separately in the top-level 'cookies' array
-    if (key.toLowerCase() !== "set-cookie") {
-      headers[key] = value;
-    }
-  });
-
-  // Extract all Set-Cookie header values cleanly. Bun/Node supports getSetCookie().
-  const cookies = typeof response.headers.getSetCookie === "function" 
-    ? response.headers.getSetCookie() 
-    : [];
-
-  const contentType = headers["content-type"] || "";
-  const isBinary =
-    contentType.includes("image/") ||
-    contentType.includes("application/octet-stream") ||
-    contentType.includes("font/");
-
-  let body: string;
-  let isBase64Encoded = false;
-
-  if (isBinary) {
-    const buffer = Buffer.from(await response.arrayBuffer());
-    body = buffer.toString("base64");
-    isBase64Encoded = true;
-  } else {
-    body = await response.text();
-  }
-
-  return {
-    statusCode: response.status,
-    headers,
-    cookies: cookies.length > 0 ? cookies : undefined,
-    body,
-    isBase64Encoded,
+    const val = this.get(name);
+    return val ? [val] : [];
   };
 }
 
-// Standard AWS Lambda handler
-export const handler = async (event: any, context: any) => {
-  if (context) {
-    context.callbackWaitsForEmptyEventLoop = false;
-  }
+// Polyfill Headers.prototype.toJSON for compatibility with legacy Bun Lambda layers
+if (typeof Headers.prototype.toJSON !== "function") {
+  Headers.prototype.toJSON = function (this: Headers) {
+    const obj: Record<string, string> = {};
+    this.forEach((value, key) => {
+      obj[key] = value;
+    });
+    return obj;
+  };
+}
 
-  try {
-    const request = buildRequest(event);
-    const response = await app.fetch(request);
-    return buildResponse(response);
-  } catch (error: any) {
-    console.error("Lambda handler error:", error);
-    return {
-      statusCode: 500,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ error: "Internal Server Error", message: error.message }),
-      isBase64Encoded: false,
-    };
-  }
+import { app } from "./app";
+
+// Bun Lambda layer handles event<->Request/Response conversion automatically.
+// With HTTP API v2, paths don't include stage prefix, so no stripping needed.
+export default {
+  fetch(request: Request): Promise<Response> | Response {
+    return app.fetch(request);
+  },
 };
+
+export { app };
