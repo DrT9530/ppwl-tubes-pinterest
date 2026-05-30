@@ -1,6 +1,6 @@
-# 📌 Pinterest Clone - Team 5
+# 📌 Pionterest - Pinterest Clone - Team 5
 
-Sebuah replika (clone) dari platform media sosial visual **Pinterest**. Proyek ini dikembangkan untuk mereplikasi fitur-fitur inti dari Pinterest, mulai dari autentikasi pengguna, eksplorasi *home feed*, unggah gambar (*pinning*), hingga interaksi antar pengguna melalui komentar, balasan, dan notifikasi.
+Pionterst merupakan sebuah replika (clone) dari platform media sosial visual **Pinterest**. Proyek ini dikembangkan untuk mereplikasi fitur-fitur inti dari Pinterest, mulai dari autentikasi pengguna, eksplorasi *home feed*, unggah gambar (*pinning*), hingga interaksi antar pengguna melalui komentar, balasan, dan notifikasi.
 
 <div align="center">
   <a href="https://d3jrjn9wcmxd7r.cloudfront.net">
