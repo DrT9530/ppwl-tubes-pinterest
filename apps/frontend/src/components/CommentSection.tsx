@@ -12,11 +12,12 @@ import {
   useEditReply,
   useDeleteReply
 } from "../hooks/useComments";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/auth.store";
 import type { CommentDTO, ReplyDTO } from "shared/types";
 import EmojiPicker from "emoji-picker-react";
 import { StickerPicker } from "./StickerPicker";
-import { X, Image as ImageIcon, Smile, StickyNote, Heart, MoreHorizontal, Pin } from "lucide-react";
+import { X, Heart, MoreHorizontal, Pin } from "lucide-react";
 
 interface CommentSectionProps {
   postId: string;
@@ -38,6 +39,7 @@ export const CommentSection = ({
   allowComments = true,
 }: CommentSectionProps) => {
   const { user, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
   
   // Comment states
   const [newComment, setNewComment] = useState("");
@@ -233,7 +235,10 @@ export const CommentSection = ({
                     ) : (
                       <>
                         <div className="text-[13px] leading-snug text-[#111]">
-                          <span className="post-detail-comment-user mr-1 font-bold hover:underline">
+                          <span 
+                            className="post-detail-comment-user mr-1 font-bold hover:underline cursor-pointer"
+                            onClick={() => navigate(`/profile/${comment.user?.id}`)}
+                          >
                             {comment.user?.username || "User"}
                           </span>
                           {" "}
@@ -293,14 +298,14 @@ export const CommentSection = ({
                           </button>
                           
                           {activeDropdownId === comment.id && (
-                            <div className="absolute left-0 top-full z-20 mt-1 w-32 overflow-hidden rounded-xl border border-gray-100 bg-white py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
-                              {user?.id === postOwnerId && user?.id !== comment.user.id && (
+                            <div className="post-detail-dropdown">
+                              {user?.id === postOwnerId && (
                                 <button
                                   onClick={() => {
                                     highlightCommentMutation.mutate(comment.id);
                                     setActiveDropdownId(null);
                                   }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-semibold text-[#111] transition hover:bg-gray-100"
+                                  className="post-detail-dropdown-item"
                                 >
                                   {comment.isHighlighted ? "Lepas Sorot" : "Sorot"}
                                 </button>
@@ -313,7 +318,7 @@ export const CommentSection = ({
                                     setEditingCommentId(comment.id);
                                     setActiveDropdownId(null);
                                   }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-semibold text-[#111] transition hover:bg-gray-100"
+                                  className="post-detail-dropdown-item"
                                 >
                                   Edit
                                 </button>
@@ -326,7 +331,7 @@ export const CommentSection = ({
                                   }
                                   setActiveDropdownId(null);
                                 }}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-semibold text-[#cc0000] transition hover:bg-[#fff0f0]"
+                                className="post-detail-dropdown-item post-detail-dropdown-item-danger"
                               >
                                 Hapus
                               </button>
@@ -341,21 +346,23 @@ export const CommentSection = ({
                 {replyingToId === comment.id && (
                   <div className="mt-2 flex w-full flex-col gap-2 pl-11">
                     <form onSubmit={(event) => handleReplySubmit(event, comment.id)}>
-                      <div className="flex min-h-[44px] w-full items-center rounded-3xl border border-[#cdcdcd] bg-white px-4 py-1 transition focus-within:border-[#767676]">
+                      <div className="post-detail-reply-input-wrapper">
                         <input
                           value={replyContent}
                           onChange={(event) => setReplyContent(event.target.value)}
                           placeholder="Balas"
-                          className="flex-1 bg-transparent py-2 text-[14px] text-[#111] outline-none"
+                          className="post-detail-reply-input"
                           autoFocus
                         />
-                        <div className="relative">
+                        <div className="post-detail-comment-actions relative">
                           <button
                             type="button"
                             onClick={() => togglePicker("reply-emoji")}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#111] transition hover:bg-gray-100"
+                            className="post-detail-comment-icon-btn"
                           >
-                            <Smile size={24} strokeWidth={2} />
+                            <svg aria-hidden="true" height="20" viewBox="0 0 24 24" width="20" fill="currentColor">
+                              <path d="M7 8.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0m10 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.64 4.27A8.8 8.8 0 0 1 12 15c-2 0-3.91-.8-5.64-2.23l1.28-1.54A6.8 6.8 0 0 0 12 13q2.18.02 4.36-1.77zM24 12a12 12 0 1 1-24 0 12 12 0 0 1 24 0M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20"></path>
+                            </svg>
                           </button>
                           
                           {pickerMode === "reply-emoji" && (
@@ -433,8 +440,11 @@ export const CommentSection = ({
                             </div>
                           ) : (
                             <>
-                              <div className="text-[12px] leading-snug text-[#111]">
-                                <span className="post-detail-comment-user mr-1 font-bold hover:underline">
+                              <div className="text-[13px] leading-snug text-[#111]">
+                                <span 
+                                  className="post-detail-comment-user mr-1 font-bold hover:underline cursor-pointer"
+                                  onClick={() => navigate(`/profile/${reply.user?.id}`)}
+                                >
                                   {reply.user?.username || "User"}
                                 </span>
                                 {" "}
@@ -493,7 +503,7 @@ export const CommentSection = ({
                                 </button>
                                 
                                 {activeDropdownId === reply.id && (
-                                  <div className="absolute left-0 top-full z-20 mt-1 w-32 overflow-hidden rounded-xl border border-gray-100 bg-white py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+                                  <div className="post-detail-dropdown">
                                     {user?.id === reply.user.id && (
                                       <button
                                         onClick={() => {
@@ -501,7 +511,7 @@ export const CommentSection = ({
                                           setEditingCommentId(reply.id);
                                           setActiveDropdownId(null);
                                         }}
-                                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold text-[#111] transition hover:bg-gray-100"
+                                        className="post-detail-dropdown-item"
                                       >
                                         Edit
                                       </button>
@@ -514,7 +524,7 @@ export const CommentSection = ({
                                         }
                                         setActiveDropdownId(null);
                                       }}
-                                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold text-[#cc0000] transition hover:bg-[#fff0f0]"
+                                      className="post-detail-dropdown-item post-detail-dropdown-item-danger"
                                     >
                                       Hapus
                                     </button>
@@ -535,7 +545,7 @@ export const CommentSection = ({
       </div>
 
       {allowComments ? (
-        <div className="flex-none w-full border-t border-[#efefef] bg-white px-8 pb-6 pt-4 lg:pl-10 lg:pr-8 max-lg:px-4">
+        <div className="post-detail-comment-footer">
           {/* Image preview */}
           {imagePreview && (
           <div className="relative mb-3 inline-block">
@@ -579,7 +589,7 @@ export const CommentSection = ({
           
           <form
             onSubmit={handleCommentSubmit}
-            className="flex min-h-[44px] w-full items-center rounded-full border border-transparent bg-[#f5f5f5] py-2 pl-4 pr-3 transition hover:bg-[#eeeeee] focus-within:border-[#d0d0d0] focus-within:bg-white"
+            className="post-detail-comment-input-wrapper"
           >
             <input
               value={newComment}
@@ -587,7 +597,7 @@ export const CommentSection = ({
               onClick={() => !isAuthenticated && onOpenAuthModal()}
               placeholder="Tambahkan komentar"
               spellCheck="false"
-              className="min-w-0 flex-1 bg-transparent pr-2 text-[14px] text-[#111] outline-none placeholder:text-[#8a8a8a]"
+              className="post-detail-comment-input"
             />
 
             <input
@@ -598,37 +608,43 @@ export const CommentSection = ({
               onChange={handleImageChange}
             />
 
-            <div className="flex flex-shrink-0 items-center gap-1 text-[#111]">
+            <div className="post-detail-comment-actions">
               <button
                 type="button"
                 onClick={() => togglePicker("emoji")}
-                className={`flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-black/5 ${pickerMode === "emoji" ? "bg-black/10" : ""}`}
+                className={`post-detail-comment-icon-btn ${pickerMode === "emoji" ? "active" : ""}`}
                 title="Emoji"
               >
-                <Smile size={20} />
+                <svg aria-hidden="true" height="20" viewBox="0 0 24 24" width="20" fill="currentColor">
+                  <path d="M7 8.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0m10 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.64 4.27A8.8 8.8 0 0 1 12 15c-2 0-3.91-.8-5.64-2.23l1.28-1.54A6.8 6.8 0 0 0 12 13q2.18.02 4.36-1.77zM24 12a12 12 0 1 1-24 0 12 12 0 0 1 24 0M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20"></path>
+                </svg>
               </button>
               <button
                 type="button"
                 onClick={() => togglePicker("sticker")}
-                className={`flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-black/5 ${pickerMode === "sticker" ? "bg-black/10" : ""}`}
+                className={`post-detail-comment-icon-btn ${pickerMode === "sticker" ? "active" : ""}`}
                 title="Sticker"
               >
-                <StickyNote size={20} />
+                <svg aria-hidden="true" height="20" viewBox="0 0 24 24" width="20" fill="currentColor">
+                  <path d="M5 1a4 4 0 0 0-4 4v14a4 4 0 0 0 4 4h5v-2H5a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-4a4 4 0 0 0-3.7 2.5 4.5 4.5 0 0 1-3.48-1.91l-1.64 1.15A6.5 6.5 0 0 0 12 16.48V23h.76a4 4 0 0 0 2.83-1.17l6.24-6.24A4 4 0 0 0 23 12.76V5a4 4 0 0 0-4-4zm15.41 13.17-6.24 6.24-.17.16V16c0-1.1.9-2 2-2h4.57zM7.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m9-3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3"></path>
+                </svg>
               </button>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-black/5"
+                className="post-detail-comment-icon-btn"
                 title="Image"
               >
-                <ImageIcon size={20} />
+                <svg aria-hidden="true" height="20" viewBox="0 0 24 24" width="20" fill="currentColor">
+                  <path d="M18 8a2 2 0 1 0-4 0 2 2 0 0 0 4 0M5 1a4 4 0 0 0-4 4v14a4 4 0 0 0 4 4h14a4 4 0 0 0 4-4V5a4 4 0 0 0-4-4zm16 4v9h-4.17a5.8 5.8 0 0 1-4.12-1.7l-.24-.24A7.04 7.04 0 0 0 3 11.63V5c0-1.1.9-2 2-2h14a2 2 0 0 1 2 2M3 19v-4.59l.94-.94a5.04 5.04 0 0 1 7.12 0l.23.24A7.8 7.8 0 0 0 16.83 16H21v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2"></path>
+                </svg>
               </button>
 
               {hasContent && (
                 <button
                   type="submit"
                   disabled={createCommentMutation.isPending}
-                  className="ml-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#e60023] text-white transition hover:bg-[#b6001a] disabled:opacity-50"
+                  className="post-detail-comment-submit-btn"
                 >
                   {createCommentMutation.isPending ? (
                     <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />

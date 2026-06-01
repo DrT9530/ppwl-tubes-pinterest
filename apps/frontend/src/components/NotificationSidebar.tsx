@@ -92,11 +92,14 @@ export function NotificationSidebar({ onClose }: { onClose: () => void }) {
 }
 
 function NotifItem({ notif }: { notif: NotificationDTO }) {
-  const label = {
+  const label: Record<string, string> = {
     LIKE: "menyukai Pin Anda.",
     COMMENT: "mengomentari Pin Anda.",
     REPLY: "membalas komentar Anda.",
-  }[notif.type];
+    FOLLOW: "mulai mengikuti Anda.",
+    COMMENT_LIKE: "menyukai komentar Anda.",
+  };
+  const labelText = label[notif.type] || "mengirim pembaruan.";
 
   return (
     <div
@@ -109,14 +112,14 @@ function NotifItem({ notif }: { notif: NotificationDTO }) {
           className="notif-item-avatar"
         />
         <span className="notif-item-badge">
-          {notif.type === "LIKE" ? "❤️" : notif.type === "COMMENT" ? "💬" : "↩️"}
+          {notif.type === "LIKE" ? "❤️" : notif.type === "COMMENT" ? "💬" : notif.type === "FOLLOW" ? "👤" : "↩️"}
         </span>
       </div>
 
       <div className="notif-item-content">
         <p className="notif-item-text">
           <span className="notif-item-actor">{notif.actor?.username ?? "Seseorang"}</span>{" "}
-          <span className="notif-item-label">{label}</span>
+          <span className="notif-item-label">{labelText}</span>
         </p>
         <p className="notif-item-time">
           {formatDistanceToNow(new Date(notif.createdAt), {

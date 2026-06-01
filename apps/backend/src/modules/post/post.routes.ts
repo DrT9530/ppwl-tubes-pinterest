@@ -64,6 +64,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         id: post.id,
         imageUrl: post.imageUrl,
         caption: post.caption,
+        allowComments: post.allowComments,
         creator: {
           ...post.creator,
           createdAt: post.creator.createdAt.toISOString(),
@@ -131,6 +132,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         id: post.id,
         imageUrl: post.imageUrl,
         caption: post.caption,
+        allowComments: post.allowComments,
         creator: {
           ...post.creator,
           createdAt: post.creator.createdAt.toISOString(),
@@ -170,7 +172,10 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
             },
           },
           comments: {
-            orderBy: { createdAt: "desc" },
+            orderBy: [
+              { isHighlighted: "desc" },
+              { createdAt: "desc" },
+            ],
             include: {
               user: {
                 select: {
@@ -232,6 +237,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
           id: post.id,
           imageUrl: post.imageUrl,
           caption: post.caption,
+          allowComments: post.allowComments,
           creator: {
             ...post.creator,
             createdAt: post.creator.createdAt.toISOString(),
@@ -495,16 +501,20 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
         return { success: false, message: "Tidak memiliki akses" };
       }
 
-      const { caption } = body as any;
+      const { caption, allowComments } = body as any;
 
       if (caption && caption.length > 500) {
         set.status = 400;
         return { success: false, message: "Caption maksimal 500 karakter" };
       }
 
+      const updateData: any = {};
+      if (caption !== undefined) updateData.caption = caption?.trim() || null;
+      if (allowComments !== undefined) updateData.allowComments = Boolean(allowComments);
+
       const updated = await prisma.post.update({
         where: { id },
-        data: { caption: caption?.trim() || null },
+        data: updateData,
       });
 
       return {
@@ -514,6 +524,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
           id: updated.id,
           imageUrl: updated.imageUrl,
           caption: updated.caption,
+          allowComments: updated.allowComments,
           createdAt: updated.createdAt.toISOString(),
         },
       };

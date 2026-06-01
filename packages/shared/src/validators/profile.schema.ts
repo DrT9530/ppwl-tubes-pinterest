@@ -9,6 +9,7 @@ export const updateProfileSchema = z.object({
     .regex(/^[a-zA-Z0-9_]+$/, "Username hanya boleh huruf, angka, dan underscore")
     .optional(),
   email: z.string().email("Email tidak valid").optional(),
+  bio: z.string().max(200, "Bio maksimal 200 karakter").optional().nullable(),
 });
 
 export const changePasswordSchema = z.object({

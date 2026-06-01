@@ -50,7 +50,7 @@ export const likeRoutes = new Elysia({ prefix: "/posts" })
             actorId: user.id,
           },
         });
-        sendNewNotification(post.creatorId, newNotif.id);
+        await sendNewNotification(post.creatorId, newNotif.id);
       }
 
       const likeCount = await prisma.like.count({

@@ -2,24 +2,30 @@ import { api } from "./api";
 import type { ApiResponse, CommentDTO, ReplyDTO } from "shared/types";
 
 export const commentService = {
-  createComment: (postId: string, content: string, image?: File, stickerUrl?: string) => {
+  createComment: async (postId: string, content: string, image?: File, stickerUrl?: string) => {
+    let imageBase64: string | undefined;
     if (image) {
-      const formData = new FormData();
-      formData.append("content", content);
-      formData.append("image", image);
-      return api.upload<ApiResponse<CommentDTO>>(`/posts/${postId}/comments`, formData);
+      imageBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(image);
+      });
     }
-    return api.post<ApiResponse<CommentDTO>>(`/posts/${postId}/comments`, { content, stickerUrl });
+    return api.post<ApiResponse<CommentDTO>>(`/posts/${postId}/comments`, { content, stickerUrl, imageBase64 });
   },
 
-  createReply: (commentId: string, content: string, image?: File, stickerUrl?: string) => {
+  createReply: async (commentId: string, content: string, image?: File, stickerUrl?: string) => {
+    let imageBase64: string | undefined;
     if (image) {
-      const formData = new FormData();
-      formData.append("content", content);
-      formData.append("image", image);
-      return api.upload<ApiResponse<ReplyDTO>>(`/comments/${commentId}/reply`, formData);
+      imageBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(image);
+      });
     }
-    return api.post<ApiResponse<ReplyDTO>>(`/comments/${commentId}/reply`, { content, stickerUrl });
+    return api.post<ApiResponse<ReplyDTO>>(`/comments/${commentId}/reply`, { content, stickerUrl, imageBase64 });
   },
 
   likeComment: (commentId: string) => {

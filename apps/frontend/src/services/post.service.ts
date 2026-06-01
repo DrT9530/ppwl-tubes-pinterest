@@ -17,7 +17,7 @@ export const postService = {
   create: (data: { imageUrl: string; caption?: string }) =>
     api.post<ApiResponse<PostDTO>>("/posts", data),
 
-  update: (id: string, data: { caption?: string }) =>
+  update: (id: string, data: { caption?: string; allowComments?: boolean }) =>
     api.patch<ApiResponse>(`/posts/${id}`, data),
 
   delete: (id: string) =>

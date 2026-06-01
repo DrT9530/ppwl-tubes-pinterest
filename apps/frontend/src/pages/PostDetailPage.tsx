@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
+  Loader2,
   Maximize2,
   Minus,
   MoreHorizontal,
@@ -74,6 +75,7 @@ export default function PostDetailPage() {
       setLocalIsLiked(data.data.isLiked || false);
       setLocalLikeCount(data.data.likeCount || 0);
       setCaptionDraft(data.data.caption || "");
+      setAllowComments(data.data.allowComments ?? true);
     }
   }, [data]);
 
@@ -116,6 +118,36 @@ export default function PostDetailPage() {
     onError: (err) =>
       toast.error(err instanceof Error ? err.message : "Gagal menghapus post"),
   });
+
+  const toggleSaveMutation = useMutation({
+    mutationFn: () => postService.toggleSave(id as string),
+    onSuccess: async (res) => {
+      await queryClient.invalidateQueries({ queryKey: ["post", id] });
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success(res.data?.isSaved ? "Post disimpan" : "Post dihapus dari simpanan");
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan post"),
+  });
+
+  const toggleCommentsMutation = useMutation({
+    mutationFn: (newVal: boolean) => postService.update(id as string, { allowComments: newVal }),
+    onSuccess: async (_data, newVal) => {
+      await queryClient.invalidateQueries({ queryKey: ["post", id] });
+      toast.success(newVal ? "Komentar diizinkan" : "Komentar dinonaktifkan");
+    },
+    onError: (_err, newVal) => {
+      setAllowComments(!newVal);
+      toast.error("Gagal mengubah izin komentar");
+    },
+  });
+
+  const handleToggleComments = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    const newVal = !allowComments;
+    setAllowComments(newVal); // Optimistic UI
+    toggleCommentsMutation.mutate(newVal);
+  };
 
   if (isLoading) {
     return (
@@ -240,7 +272,7 @@ export default function PostDetailPage() {
         <section className="w-full max-w-[1016px] flex-1 min-w-0 rounded-[24px] border border-[#efefef] bg-white shadow-[0_1px_20px_rgba(0,0,0,0.05)] overflow-hidden flex-shrink-0">
         <div className="grid min-h-[500px] lg:h-[calc(100vh-140px)] grid-cols-1 lg:grid-cols-2">
           {/* Image Section */}
-          <div className="relative flex items-center justify-center bg-white lg:rounded-l-[24px] lg:h-full overflow-hidden lg:border-r border-[#efefef] lg:p-4">
+          <div className="relative flex items-center justify-center bg-white lg:rounded-l-[24px] lg:h-full overflow-hidden lg:p-4">
             <button
               onClick={() => navigate(-1)}
               className="absolute left-4 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-[#111] shadow-sm transition-colors hover:bg-[#f1f1f1] active:bg-[#e1e1e1]"
@@ -280,8 +312,8 @@ export default function PostDetailPage() {
 
           <aside className="relative min-w-0 lg:min-h-[500px] max-lg:flex max-lg:flex-col lg:h-full rounded-r-[24px]">
             <div className="post-detail-aside-content lg:absolute lg:inset-0 flex flex-col max-lg:relative max-lg:h-auto lg:h-full w-full overflow-hidden">
-              <div className="flex-none px-8 pt-8 lg:pl-10 lg:pr-8 max-lg:px-4 max-lg:pt-4">
-                <div className="post-detail-actions-bar flex items-center justify-between gap-4 max-sm:flex-wrap">
+              <div className="flex-none px-8 pt-8 lg:pl-10 lg:pr-8 max-sm:px-4 max-sm:pt-4">
+                <div className="post-detail-actions-bar flex items-center justify-between gap-2 sm:gap-4 max-sm:flex-wrap">
               <div className="flex items-center gap-3 sm:gap-4">
                 <LikeButton
                   postId={post.id}
@@ -341,10 +373,7 @@ export default function PostDetailPage() {
                               type="button"
                               className="post-detail-dropdown-toggle-switch"
                               style={{ backgroundColor: allowComments ? "#0066f5" : "#cdcdcd" }}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setAllowComments((prev) => !prev);
-                              }}
+                              onClick={handleToggleComments}
                             >
                               <span
                                 className="post-detail-dropdown-toggle-circle"
@@ -384,13 +413,28 @@ export default function PostDetailPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1">
-                <button className="flex h-12 items-center gap-2 rounded-full px-4 text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1] active:bg-[#e1e1e1]">
+              <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2">
+                <button className="flex h-12 items-center gap-1 sm:gap-2 rounded-full px-3 sm:px-4 text-[14px] sm:text-[15px] font-semibold text-[#111] transition-colors hover:bg-[#f1f1f1] active:bg-[#e1e1e1]">
                   Profil
                   <ChevronDown size={16} strokeWidth={2.2} />
                 </button>
-                 <button className="post-detail-save-btn flex h-12 min-w-[94px] items-center justify-center rounded-full bg-[#e60023] px-5 text-[16px] font-semibold text-white transition-colors hover:bg-[#b6001a]">
-                  Simpan
+                <button 
+                  className={`post-detail-save-btn flex h-12 flex-shrink-0 min-w-[80px] sm:min-w-[94px] items-center justify-center rounded-full px-4 sm:px-5 text-[15px] sm:text-[16px] font-semibold transition-colors ${
+                    post.isSaved 
+                      ? "bg-[#111] text-white hover:bg-black" 
+                      : "bg-[#e60023] text-white hover:bg-[#b6001a]"
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!user) {
+                      toast.error("Anda harus login untuk menyimpan post");
+                      return;
+                    }
+                    toggleSaveMutation.mutate();
+                  }}
+                  disabled={toggleSaveMutation.isPending}
+                >
+                  {toggleSaveMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : post.isSaved ? "Tersimpan" : "Simpan"}
                 </button>
               </div>
             </div>
@@ -548,8 +592,23 @@ export default function PostDetailPage() {
                 <ChevronDown size={14} strokeWidth={2.2} className="ml-1 inline-block" />
               </button>
 
-              <button className="pin-lightbox-save-btn">
-                Simpan
+              <button 
+                className={`pin-lightbox-save-btn ${post.isSaved ? "saved" : ""}`}
+                style={{
+                  backgroundColor: post.isSaved ? "#111" : "#e60023",
+                  color: "white"
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!user) {
+                    toast.error("Anda harus login untuk menyimpan post");
+                    return;
+                  }
+                  toggleSaveMutation.mutate();
+                }}
+                disabled={toggleSaveMutation.isPending}
+              >
+                {toggleSaveMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : post.isSaved ? "Tersimpan" : "Simpan"}
               </button>
             </div>
           </div>

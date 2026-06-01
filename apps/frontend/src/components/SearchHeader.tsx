@@ -1,14 +1,15 @@
 // components/SearchHeader.tsx — Pinterest-style top search bar
-import { Search, Camera, Mic } from "lucide-react";
+import { Search } from "lucide-react";
 import { useAuthStore } from "../stores/auth.store";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 export function SearchHeader() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,9 +26,11 @@ export function SearchHeader() {
   }, []);
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     await logout();
     setShowDropdown(false);
     navigate("/");
+    setIsLoggingOut(false);
   };
 
   const getInitial = (name: string) => name.charAt(0).toUpperCase();
@@ -43,14 +46,6 @@ export function SearchHeader() {
           className="search-header-input"
           id="search-input"
         />
-        <div className="search-header-actions">
-          <button className="search-header-action-btn" title="Search by image">
-            <Camera size={20} />
-          </button>
-          <button className="search-header-action-btn" title="Voice search">
-            <Mic size={20} />
-          </button>
-        </div>
       </div>
 
       {/* User Avatar */}
@@ -74,7 +69,7 @@ export function SearchHeader() {
                 {getInitial(user.username)}
               </div>
             )}
-            <ChevronDown size={14} className="text-[#767676] ml-0.5 flex-shrink-0" />
+            <ChevronDown size={18} className="text-[#767676] flex-shrink-0" />
           </button>
 
           {/* Dropdown */}
@@ -127,8 +122,10 @@ export function SearchHeader() {
               {/* Menu Item: Keluar */}
               <button
                 onClick={handleLogout}
-                className="profile-dropdown-menu-item"
+                className="profile-dropdown-menu-item flex items-center gap-2"
+                disabled={isLoggingOut}
               >
+                {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : null}
                 Keluar
               </button>
             </div>
