@@ -5,6 +5,7 @@ export interface PostDTO {
   id: string;
   imageUrl: string;
   caption: string | null;
+  allowComments?: boolean;
   creator: UserDTO;
   likeCount: number;
   commentCount: number;

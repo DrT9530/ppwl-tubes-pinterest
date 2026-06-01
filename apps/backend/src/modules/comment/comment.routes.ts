@@ -28,19 +28,34 @@ export const commentRoutes = new Elysia()
       return { success: false, message: "Post tidak ditemukan." };
     }
 
+    // Cek apakah komentar diizinkan
+    if (!post.allowComments) {
+      set.status = 403;
+      return { success: false, message: "Komentar dinonaktifkan pada post ini." };
+    }
+
     // Buat komentar
     const bodyObj = body as any;
     const content = bodyObj.content || "";
     const image = bodyObj.image as File | undefined;
+    const imageBase64 = bodyObj.imageBase64 as string | undefined;
     const stickerUrl = bodyObj.stickerUrl as string | undefined;
     
-    if (!content && !image && !stickerUrl) {
+    if (!content && !image && !imageBase64 && !stickerUrl) {
       set.status = 400;
       return { success: false, message: "Komentar tidak boleh kosong" };
     }
     
     let imageUrl: string | undefined;
-    if (image && image instanceof File) {
+    if (imageBase64) {
+      try {
+        const uploaded = await uploadImageToCloudinary(imageBase64);
+        imageUrl = uploaded.imageUrl;
+      } catch (error) {
+        set.status = 500;
+        return { success: false, message: "Gagal upload gambar" };
+      }
+    } else if (image && image instanceof File) {
       if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
         set.status = 400;
         return { success: false, message: "File harus berupa gambar JPG, PNG, WEBP, atau GIF" };
@@ -78,7 +93,7 @@ export const commentRoutes = new Elysia()
           postId: id
         }
       });
-      sendNewNotification(post.creatorId, newNotif.id);
+      await sendNewNotification(post.creatorId, newNotif.id);
     }
 
     return { success: true, message: "Komentar berhasil ditambahkan", data: newComment };
@@ -97,15 +112,24 @@ export const commentRoutes = new Elysia()
     const bodyObj = body as any;
     const content = bodyObj.content || "";
     const image = bodyObj.image as File | undefined;
+    const imageBase64 = bodyObj.imageBase64 as string | undefined;
     const stickerUrl = bodyObj.stickerUrl as string | undefined;
     
-    if (!content && !image && !stickerUrl) {
+    if (!content && !image && !imageBase64 && !stickerUrl) {
       set.status = 400;
       return { success: false, message: "Balasan tidak boleh kosong" };
     }
     
     let imageUrl: string | undefined;
-    if (image && image instanceof File) {
+    if (imageBase64) {
+      try {
+        const uploaded = await uploadImageToCloudinary(imageBase64);
+        imageUrl = uploaded.imageUrl;
+      } catch (error) {
+        set.status = 500;
+        return { success: false, message: "Gagal upload gambar" };
+      }
+    } else if (image && image instanceof File) {
       if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
         set.status = 400;
         return { success: false, message: "File harus berupa gambar JPG, PNG, WEBP, atau GIF" };
@@ -143,7 +167,7 @@ export const commentRoutes = new Elysia()
           postId: targetComment.postId
         }
       });
-      sendNewNotification(targetComment.userId, newNotif.id);
+      await sendNewNotification(targetComment.userId, newNotif.id);
     }
 
     return { success: true, message: "Balasan berhasil ditambahkan", data: newReply };
@@ -174,7 +198,7 @@ export const commentRoutes = new Elysia()
             postId: comment.postId
           }
         });
-        sendNewNotification(comment.userId, newNotif.id);
+        await sendNewNotification(comment.userId, newNotif.id);
       }
 
       return { success: true, message: "Komentar disukai" };
@@ -360,7 +384,7 @@ export const commentRoutes = new Elysia()
             postId: reply.comment.postId
           }
         });
-        sendNewNotification(reply.userId, newNotif.id);
+        await sendNewNotification(reply.userId, newNotif.id);
       }
 
       return { success: true, message: "Balasan disukai" };

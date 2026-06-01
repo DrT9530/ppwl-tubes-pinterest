@@ -21,7 +21,7 @@ export function LikeButton({
   const { isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const { mutate, isPending } = useMutation({
+  const { mutate } = useMutation({
     mutationFn: () => likeService.toggle(postId),
 
     // Optimistic update

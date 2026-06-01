@@ -4,6 +4,11 @@ export interface UserDTO {
   email: string;
   username: string;
   avatarUrl: string | null;
+  bio?: string | null;
+  followerCount?: number;
+  followingCount?: number;
+  isFollowed?: boolean;
+  postCount?: number;
   createdAt: string;
 }
 

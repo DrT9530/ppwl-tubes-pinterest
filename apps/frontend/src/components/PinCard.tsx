@@ -97,7 +97,7 @@ export function getVariedHeight(index: number): number {
 }
 
 // ─── Pin Card Component ──────────────────────────────────────────────
-export function PinCard({ post, index }: { post: PostDTO; index: number }) {
+export function PinCard({ post, index, showTitle = false }: { post: PostDTO; index: number; showTitle?: boolean }) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -191,18 +191,25 @@ export function PinCard({ post, index }: { post: PostDTO; index: number }) {
         </div>
       </div>
 
-      <div className="pin-card-footer">
-        <button
-          ref={moreButtonRef}
-          className="pin-more-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowMoreMenu(!showMoreMenu);
-          }}
-          title="More options"
-        >
-          <MoreHorizontal size={20} strokeWidth={2.5} />
-        </button>
+      <div className={`pin-card-footer ${showTitle ? 'has-title' : ''}`}>
+        {showTitle && post.caption && (
+          <p className="pin-card-title" title={post.caption}>{post.caption}</p>
+        )}
+        {!showTitle || !post.caption ? <div className="flex-1" /> : null}
+        
+        {!showTitle && (
+          <button
+            ref={moreButtonRef}
+            className="pin-more-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMoreMenu(!showMoreMenu);
+            }}
+            title="More options"
+          >
+            <MoreHorizontal size={20} strokeWidth={2.5} />
+          </button>
+        )}
       </div>
 
       {showMoreMenu && (

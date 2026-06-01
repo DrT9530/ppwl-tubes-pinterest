@@ -14,6 +14,7 @@ model User {
   username     String    @unique
   passwordHash String?
   avatarUrl    String?
+  bio          String?
   provider     Provider  @default(EMAIL)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -26,17 +27,20 @@ model User {
   replyLikes    ReplyLike[]
   savedPins     SavedPin[]
   notifications Notification[]
+  followers     Follow[] @relation("Following")
+  following     Follow[] @relation("Follower")
 
   @@map("users")
 }
 
 model Post {
-  id        String   @id @default(cuid())
-  imageUrl  String
-  caption   String?
-  creatorId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  imageUrl      String
+  caption       String?
+  allowComments Boolean  @default(true)
+  creatorId     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   creator   User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   comments  Comment[]
@@ -154,4 +158,18 @@ enum NotificationType {
   COMMENT
   REPLY
   COMMENT_LIKE
+  FOLLOW
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
 }

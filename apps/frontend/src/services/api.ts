@@ -73,11 +73,12 @@ class ApiClient {
 
   async patch<T>(path: string, body?: unknown, options?: FetchOptions): Promise<T> {
     const url = this.buildUrl(path, options?.params);
+    const isFormData = body instanceof FormData;
     const response = await fetch(url, {
       method: "PATCH",
-      headers: this.getHeaders(),
+      headers: this.getHeaders(!isFormData),
       credentials: "include",
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? (body as FormData) : (body ? JSON.stringify(body) : undefined),
       ...options,
     });
     return this.handleResponse<T>(response);

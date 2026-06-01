@@ -693,10 +693,30 @@ body {
 
 .pin-card-footer {
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
+  justify-content: flex-end; /* Default behavior (tanpa judul) */
+  align-items: flex-start;
   min-height: 32px;
-  padding: 4px 2px 0;
+  padding: 8px 2px 0;
+  gap: 8px;
+}
+
+/* Jika footer memiliki judul, kita ubah justify-content nya */
+.pin-card-footer.has-title {
+  justify-content: space-between;
+}
+
+.pin-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: 4px;
+  flex: 1;
 }
 
 .pin-more-btn {
@@ -977,7 +997,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 16px 16px;
   background-color: var(--color-surface);
   position: sticky;
   top: 0;
@@ -1002,9 +1022,9 @@ body {
 .search-header-input {
   width: 100%;
   padding: 12px 100px 12px 44px;
-  background-color: var(--color-surface-secondary);
+  background-color: rgba(0, 0, 0, 0.08);
   border: 2px solid transparent;
-  border-radius: var(--radius-full);
+  border-radius: 12px;
   font-size: 16px;
   color: var(--color-text-primary);
   transition: all 0.2s ease;
@@ -1052,7 +1072,7 @@ body {
 .search-header-avatar {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   padding: 4px;
   border: none;
   background: none;
@@ -1067,8 +1087,8 @@ body {
 
 .search-header-avatar img,
 .search-header-avatar > div:first-child {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-full);
 }
 
@@ -1215,18 +1235,189 @@ body {
 
 /* ─── Profile Page ────────────────────────────────────────────────── */
 .profile-page {
-  max-width: 1024px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 40px 24px;
 }
 
-.profile-header {
+/* 1. Profile Header Section */
+.profile-layout-header {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding-left: 72px;
+  margin-bottom: 48px;   /* UBAH INI: Jarak ruang kosong di bawah bagian profil (sebelum tab Navigasi) */
+}
+
+.profile-layout-avatar-row {
+  display: flex;
   align-items: center;
-  text-align: center;
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 24px;             /* UBAH INI: Jarak antara lingkaran Avatar dengan teks Nama/Username di sebelahnya */
+  margin-bottom: 24px;   /* UBAH INI: Jarak bagian Avatar+Nama dengan bagian pengikut/bio di bawahnya */
+}
+
+.profile-layout-avatar-container {
+  position: relative;
+}
+
+.profile-layout-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 9999px;
+  background-color: #cbf2fe;
+  font-size: 48px;
+  font-weight: 500;
+  color: #000;
+  overflow: hidden;
+}
+
+.profile-layout-avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  color: #111;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s;
+}
+.profile-layout-avatar-edit-btn:hover {
+  background-color: #f9fafb;
+}
+
+.profile-layout-info-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-layout-name {
+  font-size: 32px;
+  font-weight: 600;
+  color: #111;
+  line-height: 1.2;
+}
+
+.profile-layout-username {
+  font-size: 16px;
+  color: #767676;
+}
+
+/* 2. Followers & Bio */
+.profile-layout-bio-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;              /* UBAH INI: Jarak vertikal antara tulisan "pengikut" dengan tulisan "bio" */
+  margin-bottom: 16px;   /* UBAH INI: Jarak antara bagian pengikut/bio dengan tombol aksi (Share/Edit) di bawahnya */
+}
+
+.profile-layout-followers {
+  font-size: 16px;
+  font-weight: 500;
+  color: #111;
+}
+
+.profile-layout-add-bio-btn {
+  font-size: 16px;
+  color: #767676;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  transition: color 0.2s;
+  margin-top: 4px;
+}
+.profile-layout-add-bio-btn:hover {
+  text-decoration: underline;
+}
+
+/* 3. Action Buttons (Share & Edit) */
+.profile-layout-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;              /* UBAH INI: Jarak jarak spasi mendatar antara tombol "Bagikan profil" dan "Edit profil" */
+  margin-top: 8px;       /* UBAH INI: Ruang tambahan di atas deretan tombol ini */
+}
+
+.profile-layout-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;              /* UBAH INI: Jarak antara ikon dengan teks di dalam tombol aksi */
+  padding: 12px 16px;    /* UBAH INI: Padding dalam tombol (atas-bawah 10px, kiri-kanan 16px) */
+  border-radius: 16px;
+  background-color: #e9e9e9;
+  color: #111;
+  font-weight: 500;
+  font-size: 16px;
+  transition: background-color 0.2s;
+}
+.profile-layout-action-btn:hover {
+  background-color: #d4d4d4;
+}
+
+/* 4. Tabs Section */
+.profile-layout-tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  width: 100%;
+  margin-bottom: 24px;   /* UBAH INI: Jarak antara tab "Dibuat / Disimpan" dengan grid gambar di bawahnya */
+}
+
+.profile-layout-tabs-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;             /* UBAH INI: Jarak mendatar antara tab "Dibuat" dan "Disimpan" */
+}
+
+.profile-layout-tab-btn {
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
+  transition: color 0.2s, background-color 0.2s;
+  border-bottom: 3px solid transparent;
+  border-radius: 8px;
+}
+.profile-layout-tab-btn:not(.active):hover {
+  background-color: #f3f4f6;
+}
+.profile-layout-tab-btn.active {
+  border-bottom-color: #111;
+  border-bottom-left-radius: 0; /* Biar garis bawahnya lurus tidak melengkung di ujung */
+  border-bottom-right-radius: 0;
+}
+
+/* 5. Create Button (Buat) */
+.profile-layout-create-btn-container {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.profile-layout-create-btn {
+  padding: 10px 16px;
+  border-radius: 16px;
+  background-color: #e60023;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  transition: background-color 0.2s;
+}
+.profile-layout-create-btn:hover {
+  background-color: #b6001a;
 }
 
 .profile-header .avatar-wrapper {
@@ -3108,7 +3299,7 @@ body {
   line-height: 1.2 !important;       /* Spacing baris */
   color: var(--color-text-primary) !important; /* Warna teks utama */
   margin-top: 16px !important;       /* Jarak atas title */
-  margin-bottom: 24px !important;    /* Jarak bawah title */
+  margin-bottom: 4px !important;    /* Jarak bawah title */
 }
 
 /* 2. Creator Name / Username */
@@ -3146,6 +3337,151 @@ body {
   font-size: 12px !important;       /* Ukuran font tanggal komentar (Silakan ubah) */
   font-weight: 600 !important;
   color: var(--color-text-secondary) !important;
+}
+
+/* 7. Comment Input Container (Form) */
+.post-detail-comment-input-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 44px !important;              /* Tinggi kotak input utama */
+  padding: 4px 12px 4px 16px !important;    /* Jarak di dalam kotak input (atas, kanan, bawah, kiri) */
+  background-color: transparent !important; /* Latar belakang input (transparent / putih) */
+  border: 1px solid #cdcdcd !important;     /* Ketebalan dan warna garis pinggir kotak */
+  border-radius: 24px !important;         /* Lengkungan sudut (9999px = kapsul, 16px = rounded biasa) */
+  transition: all 0.2s ease !important;     /* Animasi saat transisi/diklik */
+}
+.post-detail-comment-input-wrapper:focus-within {
+  border-color: #767676 !important;         /* Warna garis saat kotak di-klik / sedang mengetik */
+  outline: none !important;                 /* Menghilangkan outline merah bawaan browser */
+}
+
+/* 8. Comment Input Text (Area teks untuk mengetik) */
+.post-detail-comment-input {
+  flex: 1 !important;                       /* Memenuhi sisa ruang yang kosong */
+  min-width: 0 !important;                  /* Mencegah input meluber ke samping */
+  background-color: transparent !important;
+  font-size: 16px !important;               /* Ukuran font saat mengetik komentar */
+  color: #111111 !important;                /* Warna font saat mengetik komentar */
+  padding-right: 8px !important;            /* Jarak teks ke ikon di sebelah kanan */
+  outline: none !important;                 /* Menghilangkan outline merah */
+}
+.post-detail-comment-input:focus-visible {
+  outline: none !important;                 /* Menghilangkan outline merah saat navigasi keyboard */
+}
+.post-detail-comment-input::placeholder {
+  color: #8a8a8a !important;                /* Warna font "Tambahkan komentar" (Placeholder) */
+}
+
+/* 9. Comment & Reply Actions (Pembungkus kumpulan ikon) */
+.post-detail-comment-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;                      /* Jarak antar masing-masing ikon */
+  flex-shrink: 0 !important;
+}
+
+/* 10. Comment & Reply Icon Buttons (Emoji, Stiker, Foto) */
+.post-detail-comment-icon-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;                   /* Lebar area tombol ikon */
+  height: 32px !important;                  /* Tinggi area tombol ikon */
+  border-radius: 9999px !important;         /* Bentuk background saat ikon di-hover (9999px = bulat) */
+  color: #111111 !important;                /* Warna ikon */
+  background-color: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+}
+.post-detail-comment-icon-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important; /* Warna background saat mouse berada di atas ikon */
+}
+.post-detail-comment-icon-btn.active {
+  background-color: rgba(0, 0, 0, 0.1) !important;  /* Warna background saat menu ikon terbuka */
+}
+.post-detail-comment-icon-btn svg {
+  width: 24px !important;                   /* Ukuran asli ikon (svg width) */
+  height: 24px !important;                  /* Ukuran asli ikon (svg height) */
+}
+
+/* 11. Comment Submit Button (Tombol Kirim/Merah) */
+.post-detail-comment-submit-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;                   /* Lebar tombol kirim merah */
+  height: 32px !important;                  /* Tinggi tombol kirim merah */
+  border-radius: 9999px !important;         /* Bentuk tombol (9999px = bulat penuh) */
+  background-color: #e60023 !important;     /* Warna merah latar tombol kirim */
+  color: white !important;                  /* Warna ikon putih di dalam tombol */
+  margin-left: 4px !important;              /* Jarak renggang dari tombol ikon terakhir */
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+}
+.post-detail-comment-submit-btn:hover {
+  background-color: #b6001a !important;     /* Warna merah lebih gelap saat di-hover */
+}
+.post-detail-comment-submit-btn:disabled {
+  opacity: 0.5 !important;                  /* Tampilan memudar saat belum mengetik apapun */
+  cursor: not-allowed !important;
+}
+.post-detail-comment-submit-btn svg {
+  width: 16px !important;                   /* Ukuran ikon pesawat/panah dalam tombol merah */
+  height: 16px !important;
+}
+
+/* 12. Reply Input Container (Form untuk Balasan) */
+.post-detail-reply-input-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 44px !important;              /* Tinggi kotak input balasan */
+  padding: 4px 16px !important;             /* Jarak teks di dalam kotak balasan */
+  background-color: transparent !important; /* Latar belakang kotak balasan */
+  border: 1px solid #cdcdcd !important;     /* Outline warna abu-abu */
+  border-radius: 9999px !important;         /* Curve mulus */
+  transition: all 0.2s ease !important;
+}
+.post-detail-reply-input-wrapper:focus-within {
+  border-color: #767676 !important;         /* Border lebih gelap saat kotak diklik */
+  outline: none !important;                 /* Menghilangkan outline merah */
+}
+
+/* 13. Reply Input Text (Area mengetik balasan) */
+.post-detail-reply-input {
+  flex: 1 !important;
+  min-width: 0 !important;
+  background-color: transparent !important;
+  font-size: 14px !important;               /* Ukuran font input balasan */
+  color: #111111 !important;                /* Warna font tulisan balasan */
+  outline: none !important;                 /* Menghilangkan outline merah pada input */
+}
+.post-detail-reply-input:focus-visible {
+  outline: none !important;                 /* Memastikan tidak ada outline merah */
+}
+.post-detail-reply-input::placeholder {
+  color: #8a8a8a !important;                /* Warna font tulisan "Balas" (Placeholder) */
+}
+
+/* 14. Comment Footer Wrapper (Area khusus di bawah yang membungkus kotak form) */
+.post-detail-comment-footer {
+  flex: none !important;
+  width: 100% !important;
+  border-top: 1px solid #efefef !important; /* Garis pembatas abu-abu di atas kotak komentar */
+  background-color: white !important;       /* Warna latar form keseluruhan */
+  padding-top: 16px !important;             /* Jarak atas form */
+  padding-bottom: 16px !important;          /* Jarak MENGAMBANG form dari dasar (Silakan sesuaikan nilai ini!) */
+}
+/* Penyesuaian jarak khusus di layar HP (Mobile/Tablet) */
+@media (max-width: 1024px) {
+  .post-detail-comment-footer {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-bottom: 32px !important;        /* Jarak MENGAMBANG di HP */
+  }
 }
 
 /* ─── Today Page Bottom Section Customization ────────────────────────── */
@@ -3576,3 +3912,124 @@ body {
   min-width: 0 !important;
   flex: 1 !important;
 }
+
+/* Follow List Modal */
+.modal-content-follow {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 550px;
+  max-height: 703.2px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  animation: modal-enter 0.2s ease-out;
+}
+
+.modal-follow-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 40px;
+  position: relative;
+}
+
+.modal-follow-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.modal-close-btn-follow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #111;
+  transition: background-color 0.2s;
+}
+
+.modal-close-btn-follow:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.modal-follow-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.follow-list-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.follow-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.follow-list-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.follow-list-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.follow-list-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.follow-list-avatar-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #efefef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111;
+}
+
+.follow-list-username {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
+}
+
+.follow-list-action-btn {
+  background-color: #33332e;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+

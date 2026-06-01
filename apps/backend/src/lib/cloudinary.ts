@@ -47,7 +47,7 @@ function getPublicIdFromUrl(imageUrl: string) {
   }
 }
 
-export async function uploadImageToCloudinary(file: File) {
+export async function uploadImageToCloudinary(file: File | string) {
   const { cloudName, apiKey, apiSecret } = getCloudinaryConfig();
   const timestamp = Math.floor(Date.now() / 1000);
   const folder = "ppwl-pinterest/posts";

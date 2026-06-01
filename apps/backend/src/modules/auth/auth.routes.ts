@@ -198,13 +198,14 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   )
 
   // ─── GET /auth/google ──────────────────────────────────────────────
-  .get("/google", async ({ set }) => {
+  .get("/google", async ({ query, set }) => {
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
+    const u = typeof query.u === "string" ? query.u : undefined;
     
     // Encode state + codeVerifier into a single state param (no cookies needed)
     // This avoids cookie issues with serverless Lambda + API Gateway redirects
-    const combinedState = Buffer.from(JSON.stringify({ s: state, cv: codeVerifier })).toString("base64url");
+    const combinedState = Buffer.from(JSON.stringify({ s: state, cv: codeVerifier, u })).toString("base64url");
 
     const url = google.createAuthorizationURL(combinedState, codeVerifier, [
       "profile",
@@ -229,10 +230,12 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     // Decode state + codeVerifier from the state parameter
     let state: string;
     let codeVerifier: string;
+    let u: string | undefined;
     try {
       const decoded = JSON.parse(Buffer.from(stateParam, "base64url").toString());
       state = decoded.s;
       codeVerifier = decoded.cv;
+      u = decoded.u;
     } catch {
       set.status = 400;
       return { success: false, message: "Invalid state parameter" };
@@ -264,14 +267,23 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       });
 
       if (!user) {
-        // Create random unique username from email
-        const baseUsername = googleUser.email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-        const uniqueSuffix = Math.random().toString(36).substring(2, 6);
+        // Create username from typed 'u' query or email
+        let baseUsername = (u || googleUser.email.split("@")[0]).toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (!baseUsername) baseUsername = "user";
+        
+        let finalUsername = baseUsername;
+        let counter = 0;
+        while (await prisma.user.findUnique({ where: { username: finalUsername } })) {
+          const uniqueSuffix = Math.random().toString(36).substring(2, 6);
+          finalUsername = `${baseUsername}${uniqueSuffix}`;
+          counter++;
+          if (counter > 10) break;
+        }
         
         user = await prisma.user.create({
           data: {
             email: googleUser.email,
-            username: `${baseUsername}${uniqueSuffix}`,
+            username: finalUsername,
             provider: "GOOGLE",
             avatarUrl: googleUser.picture,
           }

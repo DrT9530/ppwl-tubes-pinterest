@@ -53,7 +53,7 @@ export const useLikeComment = () => {
       });
       return { previousData };
     },
-    onError: (err, _, context) => {
+    onError: (_err, _, context) => {
       if (context?.previousData) {
         context.previousData.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
       }
@@ -84,7 +84,7 @@ export const useUnlikeComment = () => {
       });
       return { previousData };
     },
-    onError: (err, _, context) => {
+    onError: (_err, _, context) => {
       if (context?.previousData) {
         context.previousData.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
       }
@@ -142,7 +142,7 @@ export const useLikeReply = () => {
       });
       return { previousData };
     },
-    onError: (err, _, context) => {
+    onError: (_err, _, context) => {
       if (context?.previousData) {
         context.previousData.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
       }
@@ -175,7 +175,7 @@ export const useUnlikeReply = () => {
       });
       return { previousData };
     },
-    onError: (err, _, context) => {
+    onError: (_err, _, context) => {
       if (context?.previousData) {
         context.previousData.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
       }
