@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../stores/auth.store";
 import { OnboardingModal } from "../components/OnboardingModal";
 import { usePostFeed } from "../hooks/usePostFeed";
@@ -8,6 +9,8 @@ import { PinCard, SkeletonCard } from "../components/PinCard";
 export default function HomePage() {
   const { user } = useAuthStore();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("q") || undefined;
 
   const {
     data,
@@ -16,7 +19,7 @@ export default function HomePage() {
     isFetchingNextPage,
     isLoading,
     isError,
-  } = usePostFeed();
+  } = usePostFeed(20, searchQuery);
 
   // Onboarding logic
   useEffect(() => {

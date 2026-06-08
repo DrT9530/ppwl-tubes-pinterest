@@ -1,5 +1,5 @@
 // components/Navbar.tsx — Main navigation bar
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Search, Bell, MessageCircle, User, LogOut } from "lucide-react";
 import { useAuthStore } from "../stores/auth.store";
 import { useState, useRef, useEffect } from "react";
@@ -10,10 +10,18 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showMsgDropdown, setShowMsgDropdown] = useState(false);
   const msgDropdownRef = useRef<HTMLDivElement>(null);
+  
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
+
+  // Update input when URL changes
+  useEffect(() => {
+    setSearchTerm(searchParams.get("q") || "");
+  }, [searchParams]);
 
   // Close dropdowns on outside click (DIPERBAIKI AMAN)
   useEffect(() => {
@@ -74,6 +82,17 @@ export function Navbar() {
           type="text"
           placeholder="Search for ideas..."
           id="search-input"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              if (searchTerm.trim()) {
+                navigate(`/?q=${encodeURIComponent(searchTerm.trim())}`);
+              } else {
+                navigate(`/`);
+              }
+            }
+          }}
         />
       </div>
 

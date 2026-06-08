@@ -20,10 +20,21 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
     async ({ request, query, user }) => {
       const page = Number(query.page) || 1;
       const limit = Number(query.limit) || 20;
+      const search = query?.search as string | undefined;
       const skip = (page - 1) * limit;
+      
+      console.log("[GET /posts] Query:", query, "Search term:", search);
+
+      const whereClause = search ? {
+        caption: {
+          contains: search,
+          mode: 'insensitive' as const
+        }
+      } : {};
 
       const [posts, total] = await Promise.all([
         prisma.post.findMany({
+          where: whereClause,
           skip,
           take: limit,
           orderBy: { createdAt: "desc" },
@@ -57,7 +68,7 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
               : false,
           },
         }),
-        prisma.post.count(),
+        prisma.post.count({ where: whereClause }),
       ]);
 
       const data: PostDTO[] = posts.map((post: any) => ({
@@ -87,6 +98,13 @@ export const postRoutes = new Elysia({ prefix: "/posts" })
           hasNext: skip + limit < total,
         },
       };
+    },
+    {
+      query: t.Object({
+        page: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+        search: t.Optional(t.String()),
+      }),
     }
   )
 
