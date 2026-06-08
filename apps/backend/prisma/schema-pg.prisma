@@ -1,14 +1,15 @@
-// schema.prisma — LOCAL development (SQLite)
-// Jalankan: bunx prisma migrate dev --schema prisma/schema.prisma
+// schema-pg.prisma — PRODUCTION (PostgreSQL / Turso fallback)
+// Jalankan: bunx prisma migrate deploy --schema prisma/schema-pg.prisma
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client-sqlite"
+  provider      = "prisma-client-js"
+  output        = "../node_modules/.prisma/client-pg"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL_LOCAL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {

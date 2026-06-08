@@ -3,9 +3,9 @@ import { api } from "./api";
 import type { ApiResponse, PostDTO, PaginatedResponse } from "shared/types";
 
 export const postService = {
-  getFeed: (page = 1, limit = 20) =>
+  getFeed: (page = 1, limit = 20, search?: string) =>
     api.get<PaginatedResponse<PostDTO>>("/posts", {
-      params: { page, limit },
+      params: { page, limit, ...(search ? { search } : {}) },
     }),
 
   getById: (id: string) =>

@@ -97,3 +97,31 @@ export async function sendNewNotification(userId: string, notificationId: string
     console.error("[Realtime] Failed to send real-time notification:", err);
   }
 }
+
+export async function sendNewMessage(userId: string, messagePayload: any) {
+  if (!connectionsTable || !websocketEndpoint) {
+    return;
+  }
+
+  try {
+    const connectionIds = await getUserConnectionIds(userId);
+    if (connectionIds.length === 0) return;
+
+    const payload = JSON.stringify({ type: "NEW_MESSAGE", payload: messagePayload });
+    const data = new TextEncoder().encode(payload);
+
+    const client = new ApiGatewayManagementApiClient({
+      region,
+      endpoint: websocketEndpoint,
+    });
+
+    await Promise.allSettled(
+      connectionIds.map((ConnectionId) =>
+        client.send(new PostToConnectionCommand({ ConnectionId, Data: data }))
+      )
+    );
+  } catch (err) {
+    console.error("[Realtime] Failed to send real-time message:", err);
+  }
+}
+

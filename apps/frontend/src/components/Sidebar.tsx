@@ -99,6 +99,9 @@ export function Sidebar() {
           });
           // Increment unread count in store
           setUnreadCount(useNotificationStore.getState().unreadCount + 1);
+        } else if (data.type === "NEW_MESSAGE") {
+          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+          queryClient.invalidateQueries({ queryKey: ["conversation", data.payload.conversationId] });
         }
       } catch (err) {
         console.error("WS Sidebar Message Error", err);
